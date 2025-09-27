@@ -7,7 +7,10 @@
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
 		"test": "vitest",
-		"cf-typegen": "wrangler types"
+		"cf-typegen": "wrangler types",
+		"db-create": "wrangler d1 execute enlacevrc-db --file=./db/schema.sql",
+		"db-test": "wrangler d1 execute enlacevrc-db --file=./db/test.sql",
+		"generate-pk": "node src/generate-key.js"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
