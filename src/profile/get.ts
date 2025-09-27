@@ -20,10 +20,16 @@ export async function GetProfile(id: string, env: Env): Promise<Response> {
         // Handle the result
         if (profile) {
             return JsonResponse({ success: true, data: profile });
-        } else {
-            const errorMessage = `Profile with vrchat_id ${id} not found`;
-            return ErrorResponse(errorMessage, 404);
         }
+
+        const statementDiscord = env.enlacevrc_db.prepare('SELECT * FROM profiles WHERE discord_id = ?');
+        const profileDiscord = await statementDiscord.bind(id).first();
+
+        if (profileDiscord) {
+            return JsonResponse({ success: true, data: profileDiscord });
+        }
+
+        return ErrorResponse('Profile not found', 404);
     } catch (e: unknown) {
         // Handle potential errors, like database connection issues
         const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred';
