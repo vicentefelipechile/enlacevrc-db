@@ -16,7 +16,7 @@ describe('UpdateProfile Handler', () => {
   const profileId = 'usr_123';
 
   it('should update a profile name successfully', async () => {
-    const updateData = { name: 'New Name' };
+    const updateData = { vrchat_name: 'New Name' };
     const request = new Request(`http://example.com/profiles/${profileId}`,
       {
         method: 'PUT',
@@ -31,8 +31,8 @@ describe('UpdateProfile Handler', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true, message: 'Profile updated successfully.' });
-    expect(mockDb.prepare).toHaveBeenCalledWith(`UPDATE profiles SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE vrchat_id = ?`);
-    expect(mockDb.bind).toHaveBeenCalledWith(updateData.name, profileId);
+    expect(mockDb.prepare).toHaveBeenCalledWith(`UPDATE profiles SET vrchat_name = ?, updated_at = CURRENT_TIMESTAMP WHERE vrchat_id = ?`);
+    expect(mockDb.bind).toHaveBeenCalledWith(updateData.vrchat_name, profileId);
   });
 
   it('should return 400 if no fields are provided for update', async () => {
@@ -46,11 +46,11 @@ describe('UpdateProfile Handler', () => {
     const response = await UpdateProfile(request, profileId, localEnv);
 
     expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({ success: false, error: 'At least one field (name or discord_id) must be provided for update.' });
+    expect(await response.json()).toEqual({ success: false, error: 'At least one field (vrchat_name or discord_id) must be provided for update.' });
   });
 
   it('should return 404 if the profile to update does not exist', async () => {
-    const updateData = { name: 'New Name' };
+    const updateData = { vrchat_name: 'New Name' };
     const request = new Request(`http://example.com/profiles/${profileId}`,
     {
       method: 'PUT',
@@ -63,16 +63,16 @@ describe('UpdateProfile Handler', () => {
     const response = await UpdateProfile(request, profileId, localEnv);
 
     expect(response.status).toBe(404);
-    expect(await response.json()).toEqual({ success: false, error: `Profile with vrchat_id ${profileId} not found.` });
+    expect(await response.json()).toEqual({ success: false, error: `Profile with id ${profileId} not found.` });
   });
 
   it('should return 500 on database update failure', async () => {
-    const updateData = { name: 'New Name' };
+    const updateData = { vrchat_name: 'New Name' };
     const request = new Request(`http://example.com/profiles/${profileId}`,
     {
       method: 'PUT',
       body: JSON.stringify(updateData),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' }
     });
 
     mockDb.first.mockResolvedValue({ vrchat_id: profileId }); // Profile exists

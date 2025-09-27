@@ -14,7 +14,7 @@ const localEnv = { ...env, enlacevrc_db: mockDb as any };
 describe('GetProfile Handler', () => {
   it('should return a profile successfully', async () => {
     const profileId = 'usr_123';
-    const mockProfile = { vrchat_id: profileId, discord_id: 'discord_456', name: 'Test User' };
+    const mockProfile = { vrchat_id: profileId, discord_id: 'discord_456', vrchat_name: 'Test User' };
     
     mockDb.first.mockResolvedValue(mockProfile);
 
@@ -35,7 +35,7 @@ describe('GetProfile Handler', () => {
     const responseBody = await response.json();
 
     expect(response.status).toBe(404);
-    expect(responseBody).toEqual({ success: false, error: `Profile with vrchat_id ${profileId} not found` });
+    expect(responseBody).toEqual({ success: false, error: 'Profile not found' });
   });
 
   it('should return 500 on database error', async () => {
