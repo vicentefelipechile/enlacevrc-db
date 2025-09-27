@@ -7,4 +7,6 @@ export interface Profile {
     is_banned: boolean;
     banned_at: Date | null;
     banned_reason: string | null;
+    is_verified: boolean;
+    verified_at: Date | null;
 }

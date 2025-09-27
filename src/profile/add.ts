@@ -3,7 +3,7 @@
  * @author vicentefelipechile
  */
 
-import type { Profile } from '../profile';
+import type { Profile } from '../models';
 import { ErrorResponse, SuccessResponse } from '../responses';
 
 /**

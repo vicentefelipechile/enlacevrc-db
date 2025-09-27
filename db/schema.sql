@@ -8,5 +8,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_banned       BOOLEAN NOT NULL DEFAULT FALSE,
     banned_at       TIMESTAMP NULL,
-    banned_reason   TEXT NULL
+    banned_reason   TEXT NULL,
+    is_verified     BOOLEAN NOT NULL DEFAULT FALSE,
+    verified_at     TIMESTAMP NULL
 );

@@ -3,7 +3,7 @@
  * @author vicentefelipechile
  */
 
-import type { Profile } from '../profile';
+import type { Profile } from '../models';
 import { ErrorResponse, SuccessResponse } from '../responses';
 
 /**
@@ -26,7 +26,7 @@ export async function UpdateProfile(request: Request, id: string, env: Env): Pro
         // First, verify the profile exists
         const profileExists = await env.enlacevrc_db.prepare('SELECT vrchat_id FROM profiles WHERE vrchat_id = ?').bind(id).first();
         if (!profileExists) {
-            return ErrorResponse(`Profile with vrchat_id ${id} not found.`, 404);
+            return ErrorResponse(`Profile with id ${id} not found.`, 404);
         }
 
         // Dynamically build the UPDATE statement
