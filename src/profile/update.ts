@@ -45,8 +45,25 @@ export async function UpdateProfile(request: Request, id: string, env: Env): Pro
             fields.push('discord_id = ?');
             values.push(updateProfileData.discord_id);
         }
-        if (updateProfileData.is_verified === true) {
-            fields.push('verified_at = CURRENT_TIMESTAMP');
+        if (updateProfileData.is_verified !== undefined) {
+            fields.push('is_verified = ?');
+            values.push(updateProfileData.is_verified ? '1' : '0');
+
+            if (updateProfileData.is_verified) {
+                fields.push('verified_at = CURRENT_TIMESTAMP');
+            } else {
+                fields.push('verified_at = NULL');
+            }
+        }
+        if (updateProfileData.is_banned !== undefined) {
+            fields.push('is_banned = ?');
+            values.push(updateProfileData.is_banned ? '1' : '0');
+
+            if (updateProfileData.is_banned) {
+                fields.push('banned_at = CURRENT_TIMESTAMP');
+            } else {
+                fields.push('banned_at = NULL');
+            }
         }
 
         // Add the timestamp update and the final ID for the WHERE clause
