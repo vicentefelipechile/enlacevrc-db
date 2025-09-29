@@ -46,7 +46,7 @@ describe('UpdateProfile Handler', () => {
     const response = await UpdateProfile(request, profileId, localEnv);
 
     expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({ success: false, error: 'At least one field (vrchat_name or discord_id) must be provided for update.' });
+    expect(await response.json()).toEqual({ success: false, error: 'No fields provided to update.' });
   });
 
   it('should return 404 if the profile to update does not exist', async () => {
@@ -63,7 +63,7 @@ describe('UpdateProfile Handler', () => {
     const response = await UpdateProfile(request, profileId, localEnv);
 
     expect(response.status).toBe(404);
-    expect(await response.json()).toEqual({ success: false, error: `Profile with id ${profileId} not found.` });
+    expect(await response.json()).toEqual({ success: false, error: 'Profile not found.' });
   });
 
   it('should return 500 on database update failure', async () => {

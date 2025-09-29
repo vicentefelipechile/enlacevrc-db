@@ -17,16 +17,20 @@ import { ErrorResponse, SuccessResponse } from '../responses';
 export async function UpdateProfile(request: Request, id: string, env: Env): Promise<Response> {
     try {
         const updateProfileData: Partial<Profile> = await request.json();
-
-        // Validate that there is at least one field to update
-        if (!updateProfileData.vrchat_name && !updateProfileData.discord_id) {
-            return ErrorResponse('At least one field (vrchat_name or discord_id) must be provided for update.', 400);
+        if (!updateProfileData || Object.keys(updateProfileData).length === 0) {
+            return ErrorResponse('No fields provided to update.', 400);
         }
 
-        // First, verify the profile exists
-        const profileExists = await env.enlacevrc_db.prepare('SELECT vrchat_id FROM profiles WHERE vrchat_id = ?').bind(id).first();
-        if (!profileExists) {
-            return ErrorResponse(`Profile with id ${id} not found.`, 404);
+        let profile: Profile | null = null;
+
+        profile = await env.enlacevrc_db.prepare('SELECT * FROM profiles WHERE vrchat_id = ?').bind(id).first();
+
+        if (!profile) {
+            profile = await env.enlacevrc_db.prepare('SELECT * FROM profiles WHERE discord_id = ?').bind(id).first();
+        }
+
+        if (!profile) {
+            return ErrorResponse('Profile not found.', 404);
         }
 
         // Dynamically build the UPDATE statement
@@ -40,6 +44,9 @@ export async function UpdateProfile(request: Request, id: string, env: Env): Pro
         if (updateProfileData.discord_id) {
             fields.push('discord_id = ?');
             values.push(updateProfileData.discord_id);
+        }
+        if (updateProfileData.is_verified === true) {
+            fields.push('verified_at = CURRENT_TIMESTAMP');
         }
 
         // Add the timestamp update and the final ID for the WHERE clause
