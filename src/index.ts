@@ -5,10 +5,11 @@
  * and routes them to the appropriate handler based on the request method and URL.
  */
 
-import { AddProfile } from './profile/add';
-import { GetProfile } from './profile/get';
+import { DeleteProfile } from './profile/delete';
 import { UpdateProfile } from './profile/update';
 import { ErrorResponse } from './responses';
+import { AddProfile } from './profile/add';
+import { GetProfile } from './profile/get';
 
 // =================================================================================================
 // Helper Functions
@@ -66,6 +67,12 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
                 return ErrorResponse('A profile ID is required for PUT requests (e.g., /profiles/some_id).', 400);
             }
             return UpdateProfile(request, id, env);
+
+        case 'DELETE':
+            if (!id) {
+                return ErrorResponse('A profile ID is required for DELETE requests (e.g., /profiles/some_id).', 400);
+            }
+            return DeleteProfile(id, env);
 
         default:
             return ErrorResponse(`Method ${request.method} not allowed.`, 405);

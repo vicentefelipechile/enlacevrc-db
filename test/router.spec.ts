@@ -80,7 +80,7 @@ describe('Router and Authentication', () => {
 
   it('should return 405 for disallowed methods', async () => {
     const request = new IncomingRequest('http://example.com/profiles', {
-      method: 'DELETE',
+      method: 'HEAD',
       headers: { Authorization: 'Bearer correct-key' },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
