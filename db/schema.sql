@@ -1,5 +1,3 @@
-DROP TABLE IF EXISTS profiles;
-
 CREATE TABLE IF NOT EXISTS profiles (
     vrchat_id       TEXT PRIMARY KEY,
     discord_id      TEXT NOT NULL,
@@ -11,4 +9,13 @@ CREATE TABLE IF NOT EXISTS profiles (
     banned_reason   TEXT NULL,
     is_verified     BOOLEAN NOT NULL DEFAULT FALSE,
     verified_at     TIMESTAMP NULL
+);
+
+CREATE TABLE IF NOT EXISTS discord_settings (
+    id                  SERIAL PRIMARY KEY,
+    discord_server_id   TEXT NOT NULL,
+    setting_key         TEXT NOT NULL,
+    setting_value       TEXT NOT NULL,
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
