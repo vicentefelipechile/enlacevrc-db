@@ -1,6 +1,6 @@
 /**
- * @file The main entry point for the Cloudflare Worker API bridge.
- * @author vicentefelipechile
+ * @file        src/index.ts
+ * @author      vicentefelipechile
  * @description This file handles incoming HTTP requests, performs authentication,
  * and routes them to the appropriate handler based on the request method and URL.
  */
