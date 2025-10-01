@@ -23,24 +23,35 @@ import { ErrorResponse, SuccessResponse } from '../responses';
  * @returns {Promise<Response>} A response indicating the result of the update operation.
  */
 export async function UpdateDiscordSetting(request: Request, discordServerId: string, env: Env): Promise<Response> {
-    // Data extraction
-    const data: Partial<DiscordSetting3D> = await request.json();
+    try {
+        // Data extraction
+        const data: Partial<DiscordSetting3D> = await request.json();
 
-    // Basic validation
-    if (!data.setting_key || !data.setting_value) {
-        return ErrorResponse('Missing required fields: setting_key and setting_value are required', 400);
+        // Basic validation
+        if (!data.setting_key || !data.setting_value) {
+            return ErrorResponse('Missing required fields: setting_key and setting_value are required', 400);
+        }
+
+        // Variable extraction
+        const {
+            setting_key: settingKey,
+            setting_value: settingValue
+        } = data;
+
+        // Statement preparation and execution
+        const statement = env.DB.prepare('UPDATE discord_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE discord_server_id = ? AND setting_key = ?');
+        await statement.bind(settingValue, discordServerId, settingKey).run();
+
+        // Database result handling
+        return SuccessResponse('Discord setting updated', 200);
+    } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred';
+        console.error(`Error updating profile: ${errorMessage}`);
+
+        if (errorMessage.includes('JSON')) {
+            return ErrorResponse('Invalid JSON in request body', 400);
+        }
+
+        return ErrorResponse('Internal Server Error', 500);
     }
-
-    // Variable extraction
-    const {
-        setting_key: settingKey,
-        setting_value: settingValue
-    } = data;
-
-    // Statement preparation and execution
-    const statement = env.DB.prepare('UPDATE discord_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE discord_server_id = ? AND setting_key = ?');
-    await statement.bind(settingValue, discordServerId, settingKey).run();
-
-    // Database result handling
-    return SuccessResponse('Discord setting updated', 200);
 }
