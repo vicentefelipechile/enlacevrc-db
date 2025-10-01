@@ -1,3 +1,9 @@
+/**
+ * @file        src/generate-key.js
+ * @author      vicentefelipechile
+ * @description Generates a secure random private key for Cloudflare Worker secrets.
+ */
+
 const { randomBytes } = require('crypto');
 
 // Generate 32 random bytes and convert to a hex string (64 characters)
