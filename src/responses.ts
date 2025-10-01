@@ -1,6 +1,8 @@
 /**
- * @file Provides standardized JSON response functions for the Cloudflare Worker.
- * @author vicentefelipechile
+ * @file        src/responses.ts
+ * @author      vicentefelipechile
+ * @description This file contains helper functions to create standardized HTTP responses
+ * for the Cloudflare Worker API, including success and error responses.
  */
 
 /**

@@ -5,11 +5,19 @@
  * and routes them to the appropriate handler based on the request method and URL.
  */
 
+// =================================================================================================
+// Import Statements
+// =================================================================================================
+
 import { DeleteProfile } from './profile/delete';
 import { UpdateProfile } from './profile/update';
 import { ErrorResponse } from './responses';
 import { AddProfile } from './profile/add';
 import { GetProfile } from './profile/get';
+import { AddDiscordSetting } from './discord/add';
+import { GetDiscordSetting } from './discord/get';
+import { UpdateDiscordSetting } from './discord/update';
+import { DeleteDiscordSetting } from './discord/delete';
 
 // =================================================================================================
 // Helper Functions
@@ -42,41 +50,47 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
     const { pathname } = new URL(request.url);
     const pathParts = pathname.split('/').filter(p => p); // e.g., /profiles/usr_123 -> ['profiles', 'usr_123']
 
-    // All routes must start with /profiles
-    if (pathParts[0] !== 'profiles') {
-        return ErrorResponse('Not Found', 404);
+    if (pathParts[0] === 'profiles') {
+        const profileId = pathParts.length > 1 ? pathParts[1] : undefined;
+        switch (request.method) {
+            case 'POST':
+                if (profileId) return ErrorResponse('POST requests cannot include an ID in the URL', 400);
+                return AddProfile(request, env);
+            case 'GET':
+                if (!profileId) return ErrorResponse('A profile ID is required for GET requests (e.g., /profiles/some_id)', 400);
+                return GetProfile(profileId, env);
+            case 'PUT':
+                if (!profileId) return ErrorResponse('A profile ID is required for PUT requests (e.g., /profiles/some_id)', 400);
+                return UpdateProfile(request, profileId, env);
+            case 'DELETE':
+                if (!profileId) return ErrorResponse('A profile ID is required for DELETE requests (e.g., /profiles/some_id)', 400);
+                return DeleteProfile(profileId, env);
+            default:
+                return ErrorResponse(`Method ${request.method} not allowed`, 405);
+        }
     }
 
-    const id = pathParts.length > 1 ? pathParts[1] : undefined;
-
-    switch (request.method) {
-        case 'POST':
-            if (id) {
-                return ErrorResponse('POST requests cannot include an ID in the URL.', 400);
-            }
-            return AddProfile(request, env);
-
-        case 'GET':
-            if (!id) {
-                return ErrorResponse('A profile ID is required for GET requests (e.g., /profiles/some_id).', 400);
-            }
-            return GetProfile(id, env);
-
-        case 'PUT':
-            if (!id) {
-                return ErrorResponse('A profile ID is required for PUT requests (e.g., /profiles/some_id).', 400);
-            }
-            return UpdateProfile(request, id, env);
-
-        case 'DELETE':
-            if (!id) {
-                return ErrorResponse('A profile ID is required for DELETE requests (e.g., /profiles/some_id).', 400);
-            }
-            return DeleteProfile(id, env);
-
-        default:
-            return ErrorResponse(`Method ${request.method} not allowed.`, 405);
+    if (pathParts[0] === 'discord-settings') {
+        const discordServerId = pathParts.length > 1 ? pathParts[1] : undefined;
+        switch (request.method) {
+            case 'POST':
+                if (!discordServerId) return ErrorResponse('A server ID is required for POST requests (e.g., /discord-settings/some_id)', 400);
+                return AddDiscordSetting(request, discordServerId, env);
+            case 'GET':
+                if (!discordServerId) return ErrorResponse('A server ID is required for GET requests (e.g., /discord-settings/some_id)', 400);
+                return GetDiscordSetting(request, discordServerId, env);
+            case 'PUT':
+                if (!discordServerId) return ErrorResponse('A server ID is required for PUT requests (e.g., /discord-settings/some_id)', 400);
+                return UpdateDiscordSetting(request, discordServerId, env);
+            case 'DELETE':
+                if (!discordServerId) return ErrorResponse('A server ID is required for DELETE requests (e.g., /discord-settings/some_id)', 400);
+                return DeleteDiscordSetting(request, discordServerId, env);
+            default:
+                return ErrorResponse(`Method ${request.method} not allowed.`, 405);
+        }
     }
+
+    return ErrorResponse('Not Found', 404);
 }
 
 // =================================================================================================
