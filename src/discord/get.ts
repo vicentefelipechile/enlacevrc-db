@@ -24,15 +24,10 @@ import { ErrorResponse, JsonResponse } from '../responses';
  */
 export async function GetDiscordSetting(request: Request, discordServerId: string, env: Env): Promise<Response> {
     // Data extraction
-    const data: Partial<DiscordSetting3D> = await request.json();
+    const url = new URL(request.url);
 
-    // Basic validation
-    if (!data.setting_key) {
-        return ErrorResponse('Missing required field: setting_key is required', 400);
-    }
-
-    // Variable extraction
-    const { setting_key: settingKey } = data;
+    const settingKey = url.searchParams.get('setting_key');
+    if (!settingKey) return ErrorResponse('Missing required query parameter: setting_key is required', 400);
 
     // Statement preparation and execution
     const statement = env.DB.prepare('SELECT * FROM discord_settings WHERE discord_server_id = ? AND setting_key = ?');
