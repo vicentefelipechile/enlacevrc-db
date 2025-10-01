@@ -41,7 +41,7 @@ describe('AddDiscordSetting Handler', () => {
 
     expect(response.status).toBe(201);
     expect(responseBody.success).toEqual(true);
-    expect(responseBody.message).toBe('Discord setting added');
+    expect(responseBody.message).toBe('Discord setting added successfully');
     expect(mockDb.prepare).toHaveBeenCalledWith('INSERT INTO discord_settings (discord_server_id, setting_key, setting_value) VALUES (?, ?, ?)');
     expect(mockDb.bind).toHaveBeenCalledWith(discordServerId, newSetting.setting_key, newSetting.setting_value);
   });
