@@ -131,9 +131,9 @@ describe('DeleteDiscordSetting Handler', () => {
     });
 
     const response = await DeleteDiscordSetting(request, discordServerId, localEnv);
+    const responseData = await response.json() as any;
 
     expect(response.status).toBe(500);
-    const responseData = await response.json() as any;
     expect(responseData.success).toBe(false);
     expect(responseData.error).toBe('Failed to delete Discord setting');
   });

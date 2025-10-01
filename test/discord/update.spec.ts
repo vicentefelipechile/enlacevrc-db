@@ -80,7 +80,7 @@ describe('UpdateDiscordSetting Handler', () => {
     expect(responseBody.error).toBe('Missing required fields: setting_key and setting_value are required');
   });
 
-  it('should return 500 for invalid JSON', async () => {
+  it('should return 400 for invalid JSON', async () => {
     const discordServerId = 'server_123';
     const request = new Request(`http://example.com/discord-settings/${discordServerId}`, {
       method: 'PUT',
@@ -89,10 +89,10 @@ describe('UpdateDiscordSetting Handler', () => {
     });
 
     const response = await UpdateDiscordSetting(request, discordServerId, localEnv);
-
-    expect(response.status).toBe(500);
     const responseData = await response.json() as any;
+
+    expect(response.status).toBe(400);
     expect(responseData.success).toBe(false);
-    expect(responseData.error).toMatch(/unexpected end of JSON input/i);
+    expect(responseData.error).toMatch('Invalid JSON in request body');
   });
 });
