@@ -18,6 +18,7 @@ import { AddDiscordSetting } from './discord/add';
 import { GetDiscordSetting } from './discord/get';
 import { UpdateDiscordSetting } from './discord/update';
 import { DeleteDiscordSetting } from './discord/delete';
+import { DiscordServerExists } from './discord/exists';
 
 // =================================================================================================
 // Helper Functions
@@ -72,6 +73,19 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
 
     if (pathParts[0] === 'discord-settings') {
         const discordServerId = pathParts.length > 1 ? pathParts[1] : undefined;
+        const action = pathParts.length > 2 ? pathParts[2] : undefined;
+
+        // Handle /discord-settings/:id/exists
+        if (action === 'exists' && request.method === 'GET') {
+            if (!discordServerId) return ErrorResponse('A server ID is required for exists check (e.g., /discord-settings/some_id/exists)', 400);
+            return DiscordServerExists(discordServerId, env);
+        }
+
+        // Reject unknown actions
+        if (action && action !== 'exists') {
+            return ErrorResponse(`Unknown action: ${action}`, 404);
+        }
+
         switch (request.method) {
             case 'POST':
                 if (!discordServerId) return ErrorResponse('A server ID is required for POST requests (e.g., /discord-settings/some_id)', 400);
