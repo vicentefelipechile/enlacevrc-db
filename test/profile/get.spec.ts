@@ -46,10 +46,21 @@ describe('GetProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody.success).toBe(true);
-    expect(responseBody.data.vrchat_id).toBe(profileId);
-    expect(responseBody.data.is_banned).toBe(false); // Converted from 0 to false
-    expect(responseBody.data.is_verified).toBe(true); // Converted from 1 to true
+    expect(responseBody).toEqual({
+      success: true,
+      data: {
+        vrchat_id: profileId,
+        discord_id: 'discord_456',
+        vrchat_name: 'Test User',
+        added_at: mockProfile.added_at.toISOString(),
+        updated_at: mockProfile.updated_at.toISOString(),
+        is_banned: false,
+        banned_at: null,
+        banned_reason: null,
+        is_verified: true,
+        verified_at: mockProfile.verified_at.toISOString()
+      }
+    });
     expect(mockDb.prepare).toHaveBeenCalledWith('SELECT * FROM profiles WHERE vrchat_id = ?');
     expect(mockDb.bind).toHaveBeenCalledWith(profileId);
   });
@@ -76,10 +87,21 @@ describe('GetProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody.success).toBe(true);
-    expect(responseBody.data.discord_id).toBe(profileId);
-    expect(responseBody.data.is_banned).toBe(false);
-    expect(responseBody.data.is_verified).toBe(false);
+    expect(responseBody).toEqual({
+      success: true,
+      data: {
+        vrchat_id: 'usr_123',
+        discord_id: profileId,
+        vrchat_name: 'Test User',
+        added_at: mockProfile.added_at.toISOString(),
+        updated_at: mockProfile.updated_at.toISOString(),
+        is_banned: false,
+        banned_at: null,
+        banned_reason: null,
+        is_verified: false,
+        verified_at: null
+      }
+    });
     expect(mockDb.prepare).toHaveBeenCalledWith('SELECT * FROM profiles WHERE vrchat_id = ?');
     expect(mockDb.prepare).toHaveBeenCalledWith('SELECT * FROM profiles WHERE discord_id = ?');
   });
@@ -92,8 +114,7 @@ describe('GetProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(404);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Profile not found');
+    expect(responseBody).toEqual({ success: false, error: 'Profile not found' });
   });
 
   it('should return 500 on database error', async () => {
@@ -105,7 +126,6 @@ describe('GetProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(500);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Internal Server Error');
+    expect(responseBody).toEqual({ success: false, error: 'Internal Server Error' });
   });
 });

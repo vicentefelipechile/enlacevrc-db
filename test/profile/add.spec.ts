@@ -39,8 +39,7 @@ describe('AddProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(201);
-    expect(responseBody.success).toBe(true);
-    expect(responseBody.message).toBe('Profile created successfully');
+    expect(responseBody).toEqual({ success: true, message: 'Profile created successfully' });
     expect(mockDb.prepare).toHaveBeenCalledWith('INSERT INTO profiles (vrchat_id, discord_id, vrchat_name) VALUES (?, ?, ?)');
     expect(mockDb.bind).toHaveBeenCalledWith(newProfile.vrchat_id, newProfile.discord_id, newProfile.vrchat_name);
   });
@@ -57,8 +56,7 @@ describe('AddProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Missing required fields: vrchat_id, discord_id, and vrchat_name are required');
+    expect(responseBody).toEqual({ success: false, error: 'Missing required fields: vrchat_id, discord_id, and vrchat_name are required' });
   });
 
   it('should return 400 for invalid JSON', async () => {
@@ -72,8 +70,7 @@ describe('AddProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Invalid JSON in request body');
+    expect(responseBody).toEqual({ success: false, error: 'Invalid JSON in request body' });
   });
 
   it('should return 409 if the profile already exists', async () => {
@@ -90,8 +87,7 @@ describe('AddProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(409);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Failed to create profile. It may already exist');
+    expect(responseBody).toEqual({ success: false, error: 'Failed to create profile. It may already exist' });
   });
 
   it('should return 500 for unexpected errors', async () => {
@@ -109,7 +105,6 @@ describe('AddProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(500);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Internal Server Error');
+    expect(responseBody).toEqual({ success: false, error: 'Internal Server Error' });
   });
 });

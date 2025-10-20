@@ -48,8 +48,7 @@ describe('DeleteProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody.success).toBe(true);
-    expect(responseBody.message).toBe('Profile deleted successfully.');
+    expect(responseBody).toEqual({ success: true, message: 'Profile deleted successfully.' });
     expect(mockDb.prepare).toHaveBeenCalledWith('SELECT * FROM profiles WHERE discord_id = ?');
     expect(mockDb.bind).toHaveBeenCalledWith(profileId);
     expect(mockDb.prepare).toHaveBeenCalledWith('DELETE FROM profiles WHERE vrchat_id = ? OR discord_id = ?');
@@ -72,8 +71,7 @@ describe('DeleteProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody.success).toBe(true);
-    expect(responseBody.message).toBe('Profile deleted successfully.');
+    expect(responseBody).toEqual({ success: true, message: 'Profile deleted successfully.' });
     expect(mockDb.prepare).toHaveBeenCalledWith('SELECT * FROM profiles WHERE discord_id = ?');
     expect(mockDb.prepare).toHaveBeenCalledWith('SELECT * FROM profiles WHERE vrchat_id = ?');
     expect(mockDb.bind).toHaveBeenCalledWith(profileId);
@@ -88,8 +86,7 @@ describe('DeleteProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(404);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Profile not found.');
+    expect(responseBody).toEqual({ success: false, error: 'Profile not found.' });
   });
 
   it('should return 500 if database deletion fails', async () => {
@@ -107,8 +104,7 @@ describe('DeleteProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(500);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Failed to delete profile.');
+    expect(responseBody).toEqual({ success: false, error: 'Failed to delete profile.' });
   });
 
   it('should return 500 for an unexpected server error', async () => {
@@ -121,7 +117,6 @@ describe('DeleteProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(500);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Internal Server Error');
+    expect(responseBody).toEqual({ success: false, error: 'Internal Server Error' });
   });
 });

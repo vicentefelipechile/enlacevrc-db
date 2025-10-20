@@ -43,8 +43,7 @@ describe('UpdateProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody.success).toBe(true);
-    expect(responseBody.message).toBe('Profile updated successfully');
+    expect(responseBody).toEqual({ success: true, message: 'Profile updated successfully' });
     expect(mockDb.prepare).toHaveBeenCalledWith(`UPDATE profiles SET vrchat_name = ?, updated_at = CURRENT_TIMESTAMP WHERE vrchat_id = ?`);
     expect(mockDb.bind).toHaveBeenCalledWith(updateData.vrchat_name, profileId);
   });
@@ -64,8 +63,7 @@ describe('UpdateProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody.success).toBe(true);
-    expect(responseBody.message).toBe('Profile updated successfully');
+    expect(responseBody).toEqual({ success: true, message: 'Profile updated successfully' });
     expect(mockDb.prepare).toHaveBeenCalledWith(`UPDATE profiles SET is_verified = ?, verified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE vrchat_id = ?`);
     expect(mockDb.bind).toHaveBeenCalledWith('1', profileId);
   });
@@ -85,8 +83,7 @@ describe('UpdateProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody.success).toBe(true);
-    expect(responseBody.message).toBe('Profile updated successfully');
+    expect(responseBody).toEqual({ success: true, message: 'Profile updated successfully' });
     expect(mockDb.prepare).toHaveBeenCalledWith(`UPDATE profiles SET is_banned = ?, banned_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE vrchat_id = ?`);
     expect(mockDb.bind).toHaveBeenCalledWith('1', profileId);
   });
@@ -102,8 +99,7 @@ describe('UpdateProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('No fields provided to update');
+    expect(responseBody).toEqual({ success: false, error: 'No fields provided to update' });
   });
 
   it('should return 404 if the profile to update does not exist', async () => {
@@ -120,8 +116,7 @@ describe('UpdateProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(404);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Profile not found');
+    expect(responseBody).toEqual({ success: false, error: 'Profile not found' });
   });
 
   it('should return 500 on database update failure', async () => {
@@ -139,8 +134,7 @@ describe('UpdateProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(500);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Failed to update profile');
+    expect(responseBody).toEqual({ success: false, error: 'Failed to update profile' });
   });
 
   it('should return 400 for invalid JSON', async () => {
@@ -154,8 +148,7 @@ describe('UpdateProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Invalid JSON in request body');
+    expect(responseBody).toEqual({ success: false, error: 'Invalid JSON in request body' });
   });
 
   it('should return 500 for unexpected errors', async () => {
@@ -172,7 +165,6 @@ describe('UpdateProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(500);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Internal Server Error');
+    expect(responseBody).toEqual({ success: false, error: 'Internal Server Error' });
   });
 });
