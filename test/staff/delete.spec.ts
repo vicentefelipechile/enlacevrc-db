@@ -32,8 +32,7 @@ describe('DeleteStaff Handler', () => {
       id: 1,
       discord_id: staffId,
       name: 'John Doe',
-      added_at: new Date(),
-      added_by: 'admin_456'
+      added_at: new Date()
     };
 
     mockDb.first.mockResolvedValue(existingStaff);
@@ -67,8 +66,7 @@ describe('DeleteStaff Handler', () => {
       id: 1,
       discord_id: staffId,
       name: 'John Doe',
-      added_at: new Date(),
-      added_by: 'admin_456'
+      added_at: new Date()
     };
 
     mockDb.first.mockResolvedValue(existingStaff);

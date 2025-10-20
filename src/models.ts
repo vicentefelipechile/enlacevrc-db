@@ -52,5 +52,4 @@ export interface Staff {
     discord_id: string;
     name: string;
     added_at: Date;
-    added_by: string;
 }

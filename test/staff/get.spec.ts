@@ -32,12 +32,12 @@ describe('GetStaff Handler', () => {
 
   it('should return a staff member successfully by Discord ID', async () => {
     const staffId = 'staff_123';
+    const mockDate = new Date().toISOString();
     const mockStaff = {
       id: 1,
       discord_id: staffId,
       name: 'John Doe',
-      added_at: new Date(),
-      added_by: 'admin_456'
+      added_at: mockDate
     };
 
     mockDb.first.mockResolvedValue(mockStaff);
@@ -52,8 +52,7 @@ describe('GetStaff Handler', () => {
         id: 1,
         discord_id: staffId,
         name: 'John Doe',
-        added_at: mockStaff.added_at,
-        added_by: 'admin_456'
+        added_at: mockDate
       }
     });
     expect(mockDb.prepare).toHaveBeenCalledWith('SELECT * FROM staff WHERE discord_id = ?');
@@ -61,9 +60,11 @@ describe('GetStaff Handler', () => {
   });
 
   it('should return all staff members when no ID is provided', async () => {
+    const mockDate1 = new Date().toISOString();
+    const mockDate2 = new Date().toISOString();
     const mockStaffList = [
-      { id: 1, discord_id: 'staff_123', name: 'John Doe', added_at: new Date(), added_by: 'admin_456' },
-      { id: 2, discord_id: 'staff_789', name: 'Jane Smith', added_at: new Date(), added_by: 'admin_456' }
+      { id: 1, discord_id: 'staff_123', name: 'John Doe', added_at: mockDate1 },
+      { id: 2, discord_id: 'staff_789', name: 'Jane Smith', added_at: mockDate2 }
     ];
 
     mockDb.all.mockResolvedValue({ results: mockStaffList });

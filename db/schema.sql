@@ -25,6 +25,5 @@ CREATE TABLE IF NOT EXISTS staff (
     id                  SERIAL PRIMARY KEY,
     discord_id          TEXT NOT NULL UNIQUE,
     name                TEXT NOT NULL,
-    added_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    added_by            TEXT NOT NULL
+    added_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
