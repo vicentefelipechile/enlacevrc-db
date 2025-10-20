@@ -47,8 +47,7 @@ describe('GetDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody.success).toBe(true);
-    expect(responseBody.data[settingKey]).toBe(mockSetting.setting_value);
+    expect(responseBody).toEqual({ success: true, data: { [settingKey]: mockSetting.setting_value } });
     expect(mockDb.prepare).toHaveBeenCalledWith('SELECT setting_value FROM discord_settings WHERE discord_server_id = ? AND setting_key = ?');
     expect(mockDb.bind).toHaveBeenCalledWith(discordServerId, settingKey);
   });
@@ -67,8 +66,7 @@ describe('GetDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(404);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Discord setting not found');
+    expect(responseBody).toEqual({ success: false, error: 'Discord setting not found' });
   });
 
   it('should return 400 for missing setting_key', async () => {
@@ -82,8 +80,7 @@ describe('GetDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Missing required query parameter: setting_key is required');
+    expect(responseBody).toEqual({ success: false, error: 'Missing required query parameter: setting_key is required' });
   });
 
   it('should return all settings when getallsettings=true', async () => {
@@ -109,10 +106,13 @@ describe('GetDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody.success).toBe(true);
-    expect(Object.keys(responseBody.data)).toHaveLength(2);
-    expect(responseBody.data['prefix']).toBe('!');
-    expect(responseBody.data['welcome_channel']).toBe('123456789');
+    expect(responseBody).toEqual({
+      success: true,
+      data: {
+        'prefix': '!',
+        'welcome_channel': '123456789'
+      }
+    });
     expect(mockDb.prepare).toHaveBeenCalledWith('SELECT setting_key, setting_value FROM discord_settings WHERE discord_server_id = ?');
     expect(mockDb.bind).toHaveBeenCalledWith(discordServerId);
   });
@@ -130,8 +130,7 @@ describe('GetDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(404);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('No Discord settings found for this server');
+    expect(responseBody).toEqual({ success: false, error: 'No Discord settings found for this server' });
   });
 
   it('should return 404 when database operation fails with getallsettings=true', async () => {
@@ -147,8 +146,7 @@ describe('GetDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(404);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('No Discord settings found for this server');
+    expect(responseBody).toEqual({ success: false, error: 'No Discord settings found for this server' });
   });
 
   it('should return 500 when database throws an unexpected error', async () => {
@@ -165,8 +163,7 @@ describe('GetDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(500);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Internal Server Error');
+    expect(responseBody).toEqual({ success: false, error: 'Internal Server Error' });
   });
 
   it('should return 500 when database throws an unexpected error with getallsettings=true', async () => {
@@ -182,8 +179,7 @@ describe('GetDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(500);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Internal Server Error');
+    expect(responseBody).toEqual({ success: false, error: 'Internal Server Error' });
   });
 
   it('should handle empty string values correctly', async () => {
@@ -204,8 +200,7 @@ describe('GetDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody.success).toBe(true);
-    expect(responseBody.data[settingKey]).toBe('');
+    expect(responseBody).toEqual({ success: true, data: { [settingKey]: '' } });
   });
 
   it('should handle special characters in setting values', async () => {
@@ -227,8 +222,7 @@ describe('GetDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody.success).toBe(true);
-    expect(responseBody.data[settingKey]).toBe(specialValue);
+    expect(responseBody).toEqual({ success: true, data: { [settingKey]: specialValue } });
   });
 
   it('should handle URL encoded setting keys', async () => {
@@ -249,8 +243,7 @@ describe('GetDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody.success).toBe(true);
-    expect(responseBody.data['welcome message']).toBe('Hello World!');
+    expect(responseBody).toEqual({ success: true, data: { 'welcome message': 'Hello World!' } });
     expect(mockDb.bind).toHaveBeenCalledWith(discordServerId, 'welcome message');
   });
 
@@ -274,8 +267,7 @@ describe('GetDiscordSetting Handler', () => {
     const responseBodyFalse = await responseFalse.json() as any;
 
     expect(responseFalse.status).toBe(200);
-    expect(responseBodyFalse.success).toBe(true);
-    expect(responseBodyFalse.data[settingKey]).toBe('!');
+    expect(responseBodyFalse).toEqual({ success: true, data: { [settingKey]: '!' } });
     expect(mockDb.prepare).toHaveBeenCalledWith('SELECT setting_value FROM discord_settings WHERE discord_server_id = ? AND setting_key = ?');
   });
 });

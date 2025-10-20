@@ -40,8 +40,7 @@ describe('AddDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(201);
-    expect(responseBody.success).toEqual(true);
-    expect(responseBody.message).toBe('Discord setting added successfully');
+    expect(responseBody).toEqual({ success: true, message: 'Discord setting added successfully' });
     expect(mockDb.prepare).toHaveBeenCalledWith('INSERT INTO discord_settings (discord_server_id, setting_key, setting_value) VALUES (?, ?, ?)');
     expect(mockDb.bind).toHaveBeenCalledWith(discordServerId, newSetting.setting_key, newSetting.setting_value);
   });
@@ -59,8 +58,7 @@ describe('AddDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Missing required fields: setting_key and setting_value are required');
+    expect(responseBody).toEqual({ success: false, error: 'Missing required fields: setting_key and setting_value are required' });
   });
 
   it('should return 400 for missing setting_value', async () => {
@@ -76,8 +74,7 @@ describe('AddDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Missing required fields: setting_key and setting_value are required');
+    expect(responseBody).toEqual({ success: false, error: 'Missing required fields: setting_key and setting_value are required' });
   });
 
   it('should return 409 for database failure', async () => {
@@ -95,8 +92,7 @@ describe('AddDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(409);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Failed to add Discord setting');
+    expect(responseBody).toEqual({ success: false, error: 'Failed to add Discord setting' });
   });
 
   it('should return 500 for invalid JSON', async () => {
@@ -111,7 +107,6 @@ describe('AddDiscordSetting Handler', () => {
     const responseData = await response.json() as any;
 
     expect(response.status).toBe(500);
-    expect(responseData.success).toBe(false);
-    expect(responseData.error).toMatch('Internal Server Error');
+    expect(responseData).toEqual({ success: false, error: 'Internal Server Error' });
   });
 });

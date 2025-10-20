@@ -40,8 +40,7 @@ describe('UpdateDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody.success).toBe(true);
-    expect(responseBody.message).toBe('Discord setting updated');
+    expect(responseBody).toEqual({ success: true, message: 'Discord setting updated' });
     expect(mockDb.prepare).toHaveBeenCalledWith('UPDATE discord_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE discord_server_id = ? AND setting_key = ?');
     expect(mockDb.bind).toHaveBeenCalledWith(updateData.setting_value, discordServerId, updateData.setting_key);
   });
@@ -59,8 +58,7 @@ describe('UpdateDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Missing required fields: setting_key and setting_value are required');
+    expect(responseBody).toEqual({ success: false, error: 'Missing required fields: setting_key and setting_value are required' });
   });
 
   it('should return 400 for missing setting_value', async () => {
@@ -76,8 +74,7 @@ describe('UpdateDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Missing required fields: setting_key and setting_value are required');
+    expect(responseBody).toEqual({ success: false, error: 'Missing required fields: setting_key and setting_value are required' });
   });
 
   it('should return 400 for invalid JSON', async () => {
@@ -92,7 +89,6 @@ describe('UpdateDiscordSetting Handler', () => {
     const responseData = await response.json() as any;
 
     expect(response.status).toBe(400);
-    expect(responseData.success).toBe(false);
-    expect(responseData.error).toMatch('Invalid JSON in request body');
+    expect(responseData).toEqual({ success: false, error: 'Invalid JSON in request body' });
   });
 });

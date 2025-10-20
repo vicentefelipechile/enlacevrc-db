@@ -51,8 +51,7 @@ describe('DeleteDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody.success).toBe(true);
-    expect(responseBody.message).toBe('Discord setting deleted');
+    expect(responseBody).toEqual({ success: true, message: 'Discord setting deleted' });
     expect(mockDb.prepare).toHaveBeenCalledWith('SELECT * FROM discord_settings WHERE discord_server_id = ? AND setting_key = ?');
     expect(mockDb.bind).toHaveBeenCalledWith(discordServerId, requestData.setting_key);
   });
@@ -73,8 +72,7 @@ describe('DeleteDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(404);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Discord setting not found');
+    expect(responseBody).toEqual({ success: false, error: 'Discord setting not found' });
   });
 
   it('should return 400 for missing setting_key', async () => {
@@ -91,8 +89,7 @@ describe('DeleteDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Missing required field: setting_key is required');
+    expect(responseBody).toEqual({ success: false, error: 'Missing required field: setting_key is required' });
   });
 
   it('should return 404 if database delete fails', async () => {
@@ -118,8 +115,7 @@ describe('DeleteDiscordSetting Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(404);
-    expect(responseBody.success).toBe(false);
-    expect(responseBody.error).toBe('Failed to delete Discord setting. It may not exist');
+    expect(responseBody).toEqual({ success: false, error: 'Failed to delete Discord setting. It may not exist' });
   });
 
   it('should return 500 for invalid JSON', async () => {
@@ -134,7 +130,6 @@ describe('DeleteDiscordSetting Handler', () => {
     const responseData = await response.json() as any;
 
     expect(response.status).toBe(500);
-    expect(responseData.success).toBe(false);
-    expect(responseData.error).toBe('Failed to delete Discord setting');
+    expect(responseData).toEqual({ success: false, error: 'Failed to delete Discord setting' });
   });
 });
