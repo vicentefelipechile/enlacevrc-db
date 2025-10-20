@@ -16,7 +16,7 @@
         <structure>
             <imports>
                 <rule>Group imports in sections with clear comment headers</rule>
-                <rule>Import models from '../models' (Profile, DiscordSetting3D)</rule>
+                <rule>Import models from '../models' (Profile, DiscordSetting)</rule>
                 <rule>Import response functions from '../responses' (ErrorResponse, SuccessResponse, JsonResponse)</rule>
                 <rule>Use section comment: "// Import Statements"</rule>
             </imports>
