@@ -8,7 +8,7 @@
 // Import Statements
 // =================================================================================================
 
-import { DiscordSetting3D } from '../models';
+import { DiscordSetting } from '../models';
 import { ErrorResponse, SuccessResponse } from '../responses';
 
 // =================================================================================================
@@ -25,7 +25,7 @@ import { ErrorResponse, SuccessResponse } from '../responses';
 export async function UpdateDiscordSetting(request: Request, discordServerId: string, env: Env): Promise<Response> {
     try {
         // Data extraction
-        const data: Partial<DiscordSetting3D> = await request.json();
+        const data: Partial<DiscordSetting> = await request.json();
 
         // Basic validation
         if (!data.setting_key || !data.setting_value) {

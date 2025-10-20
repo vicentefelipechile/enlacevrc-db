@@ -8,7 +8,7 @@
 // Import Statements
 // =================================================================================================
 
-import { DiscordSetting3D } from '../models';
+import { DiscordSetting } from '../models';
 import { ErrorResponse, SuccessResponse } from '../responses';
 
 // =================================================================================================
@@ -25,7 +25,7 @@ import { ErrorResponse, SuccessResponse } from '../responses';
 export async function DeleteDiscordSetting(request: Request, discordServerId: string, env: Env): Promise<Response> {
     try {
         // Data extraction
-        const data: Partial<DiscordSetting3D> = await request.json();
+        const data: Partial<DiscordSetting> = await request.json();
         
         // Basic validation
         if (!data.setting_key) {
@@ -37,7 +37,7 @@ export async function DeleteDiscordSetting(request: Request, discordServerId: st
 
         // Statement preparation and execution
         const statementFound = env.DB.prepare('SELECT * FROM discord_settings WHERE discord_server_id = ? AND setting_key = ?');
-        const dataFound = await statementFound.bind(discordServerId, settingKey).first<DiscordSetting3D>();
+        const dataFound = await statementFound.bind(discordServerId, settingKey).first<DiscordSetting>();
         if (!dataFound) {
             return ErrorResponse('Discord setting not found', 404);
         }

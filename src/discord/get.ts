@@ -8,6 +8,7 @@
 // Import Statements
 // =================================================================================================
 
+import { DiscordSetting } from '../models';
 import { ErrorResponse, JsonResponse } from '../responses';
 
 // =================================================================================================
@@ -38,7 +39,7 @@ export async function GetDiscordSetting(request: Request, discordServerId: strin
         if (getAllSettings === 'true') {
             // Statement preparation and execution
             const statement = env.DB.prepare('SELECT setting_key, setting_value FROM discord_settings WHERE discord_server_id = ?');
-            const result = await statement.bind(discordServerId).all<SettingKeyValue>();
+            const result = await statement.bind(discordServerId).all<DiscordSetting>();
 
             // Database result handling
             if (!result.success || result.results.length === 0) {
