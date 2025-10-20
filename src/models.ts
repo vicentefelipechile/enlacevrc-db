@@ -10,7 +10,7 @@
 // =================================================================================================
 
 /**
- * @description Represents a user profile in the database.
+ * @description Represents an user profile in the database.
  * @interface Profile
  */
 
@@ -25,19 +25,32 @@ export interface Profile {
     banned_reason?: string;
     is_verified: boolean | number;
     verified_at?: Date;
+    verified_by?: string;
 }
 
 /**
  * @description Represents a Discord setting in the database.
  * @interface DiscordSetting
- * Why it have 3D in the name? idk, ask gemini
  */
 
-export interface DiscordSetting3D {
+export interface DiscordSetting {
     id: number;
     discord_server_id: string;
     setting_key: string;
     setting_value: string;
     created_at: Date;
     updated_at: Date;
+}
+
+/**
+ * @description Represents a staff who can manage the bot and database.
+ * @interface Staff
+ */
+
+export interface Staff {
+    id: number;
+    discord_id: string;
+    name: string;
+    added_at: Date;
+    added_by: string;
 }

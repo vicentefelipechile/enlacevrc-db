@@ -19,6 +19,10 @@ import { GetDiscordSetting } from './discord/get';
 import { UpdateDiscordSetting } from './discord/update';
 import { DeleteDiscordSetting } from './discord/delete';
 import { DiscordServerExists } from './discord/exists';
+import { AddStaff } from './staff/add';
+import { GetStaff } from './staff/get';
+import { UpdateStaff } from './staff/update';
+import { DeleteStaff } from './staff/delete';
 
 // =================================================================================================
 // Helper Functions
@@ -101,6 +105,27 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
                 return DeleteDiscordSetting(request, discordServerId, env);
             default:
                 return ErrorResponse(`Method ${request.method} not allowed.`, 405);
+        }
+    }
+
+    if (pathParts[0] === 'staff') {
+        const staffId = pathParts.length > 1 ? pathParts[1] : undefined;
+        
+        switch (request.method) {
+            case 'POST':
+                if (staffId) return ErrorResponse('POST requests cannot include an ID in the URL', 400);
+                return AddStaff(request, env);
+            case 'GET':
+                // Allow GET without ID to return all staff members
+                return GetStaff(staffId, env);
+            case 'PUT':
+                if (!staffId) return ErrorResponse('A staff ID is required for PUT requests (e.g., /staff/some_id)', 400);
+                return UpdateStaff(request, staffId, env);
+            case 'DELETE':
+                if (!staffId) return ErrorResponse('A staff ID is required for DELETE requests (e.g., /staff/some_id)', 400);
+                return DeleteStaff(staffId, env);
+            default:
+                return ErrorResponse(`Method ${request.method} not allowed`, 405);
         }
     }
 

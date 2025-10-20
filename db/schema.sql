@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS profiles (
     banned_at       TIMESTAMP NULL,
     banned_reason   TEXT NULL,
     is_verified     BOOLEAN NOT NULL DEFAULT FALSE,
-    verified_at     TIMESTAMP NULL
+    verified_at     TIMESTAMP NULL,
+    verified_by     TEXT NULL
 );
 
 CREATE TABLE IF NOT EXISTS discord_settings (
@@ -18,4 +19,12 @@ CREATE TABLE IF NOT EXISTS discord_settings (
     setting_value       TEXT NOT NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS staff (
+    id                  SERIAL PRIMARY KEY,
+    discord_id          TEXT NOT NULL UNIQUE,
+    name                TEXT NOT NULL,
+    added_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    added_by            TEXT NOT NULL
 );
