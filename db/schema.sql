@@ -14,10 +14,10 @@
 */
 
 CREATE TABLE IF NOT EXISTS ban_reason (
-    ban_reason_id   INT AUTO_INCREMENT PRIMARY KEY,
+    ban_reason_id   INTEGER PRIMARY KEY AUTOINCREMENT,
     reason_text     TEXT NOT NULL UNIQUE,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by      TEXT NOT NULL,
+    created_by      TEXT DEFAULT 'system',
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -27,12 +27,12 @@ CREATE TABLE IF NOT EXISTS ban_reason (
 */
 
 CREATE TABLE IF NOT EXISTS setting_type (
-    setting_type_id INT AUTO_INCREMENT PRIMARY KEY,
+    setting_type_id INTEGER PRIMARY KEY AUTOINCREMENT,
     type_name       TEXT NOT NULL UNIQUE,
     description     TEXT,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by      TEXT DEFAULT 'system',
-    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by     TEXT DEFAULT 'system',
+    updated_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 /*
@@ -41,12 +41,13 @@ CREATE TABLE IF NOT EXISTS setting_type (
 */
 
 CREATE TABLE IF NOT EXISTS setting (
-    setting_id          INT AUTO_INCREMENT PRIMARY KEY,
+    setting_id          INTEGER PRIMARY KEY AUTOINCREMENT,
     setting_name        TEXT NOT NULL UNIQUE,
-    setting_type_id     INTEGER NOT NULL REFERENCES setting_type(setting_type_id),
+    setting_type_id     INTEGER NOT NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by          TEXT DEFAULT 'system',
-    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(setting_type_id) REFERENCES setting_type(setting_type_id)
 );
 
 /*
@@ -55,7 +56,7 @@ CREATE TABLE IF NOT EXISTS setting (
 */
 
 CREATE TABLE IF NOT EXISTS log_level (
-    log_level_id   INT AUTO_INCREMENT PRIMARY KEY,
+    log_level_id   INTEGER PRIMARY KEY AUTOINCREMENT,
     level_name     TEXT NOT NULL UNIQUE,
     description    TEXT NOT NULL,
     created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -69,11 +70,12 @@ CREATE TABLE IF NOT EXISTS log_level (
 */
 
 CREATE TABLE IF NOT EXISTS log (
-    log_id          INT AUTO_INCREMENT PRIMARY KEY,
-    log_level       TEXT NOT NULL,
+    log_id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    log_level_id    INTEGER NOT NULL,
     log_message     TEXT NOT NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by      TEXT DEFAULT 'system',
+    FOREIGN KEY(log_level_id) REFERENCES log_level(log_level_id)
 );
 
 /* ==============================================================================================
@@ -86,7 +88,7 @@ CREATE TABLE IF NOT EXISTS log (
 */
 
 CREATE TABLE IF NOT EXISTS discord_server (
-    server_id          TEXT UNIQUE,
+    server_id          TEXT PRIMARY KEY,
     server_name        TEXT NOT NULL,
     added_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     added_by           TEXT NOT NULL
@@ -99,10 +101,10 @@ CREATE TABLE IF NOT EXISTS discord_server (
 */
 
 CREATE TABLE IF NOT EXISTS bot_admin (
-    admin_id        INT AUTO_INCREMENT PRIMARY KEY,
+    admin_id        INTEGER PRIMARY KEY AUTOINCREMENT,
     discord_id      TEXT NOT NULL UNIQUE,
     added_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    added_by        DEFAULT TEXT 'vicentefelipechile'
+    added_by        TEXT DEFAULT 'vicentefelipechile'
 );
 
 
@@ -112,11 +114,12 @@ CREATE TABLE IF NOT EXISTS bot_admin (
 */
 
 CREATE TABLE IF NOT EXISTS staff (
-    staff_id        INT AUTO_INCREMENT PRIMARY KEY,
+    staff_id        INTEGER PRIMARY KEY AUTOINCREMENT,
     discord_id      TEXT NOT NULL UNIQUE,
     discord_name    TEXT,
     added_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    added_by        INTEGER NOT NULL REFERENCES bot_admin(admin_id)
+    added_by        INTEGER NOT NULL,
+    FOREIGN KEY(added_by) REFERENCES bot_admin(admin_id)
 );
 
 /*
@@ -125,7 +128,7 @@ CREATE TABLE IF NOT EXISTS staff (
 */
 
 CREATE TABLE IF NOT EXISTS profiles (
-    profile_id      INT AUTO_INCREMENT PRIMARY KEY,
+    profile_id      INTEGER PRIMARY KEY AUTOINCREMENT,
     vrchat_id       TEXT NOT NULL UNIQUE,
     discord_id      TEXT NOT NULL,
     vrchat_name     TEXT NOT NULL,
@@ -134,13 +137,18 @@ CREATE TABLE IF NOT EXISTS profiles (
 
     is_banned       BOOLEAN NOT NULL DEFAULT FALSE,
     banned_at       TIMESTAMP NULL,
-    banned_reason   INTEGER NULL REFERENCES ban_reason(ban_reason_id),
-    banned_by       INTEGER NULL REFERENCES staff(staff_id),
+    banned_reason   INTEGER NULL,
+    banned_by       INTEGER NULL,
 
     is_verified     BOOLEAN NOT NULL DEFAULT FALSE,
     verified_at     TIMESTAMP NULL,
-    verified_from   INTEGER NULL REFERENCES discord_server(discord_server_id),
-    verified_by     INTEGER NULL REFERENCES staff(staff_id)
+    verified_from   TEXT NULL,
+    verified_by     INTEGER NULL,
+
+    FOREIGN KEY(banned_reason) REFERENCES ban_reason(ban_reason_id),
+    FOREIGN KEY(banned_by) REFERENCES staff(staff_id),
+    FOREIGN KEY(verified_from) REFERENCES discord_server(server_id),
+    FOREIGN KEY(verified_by) REFERENCES staff(staff_id)
 );
 
 /*
@@ -149,12 +157,15 @@ CREATE TABLE IF NOT EXISTS profiles (
 */
 
 CREATE TABLE IF NOT EXISTS discord_settings (
-    discord_setting_id  INT AUTO_INCREMENT PRIMARY KEY,
-    discord_server_id   TEXT NOT NULL REFERENCES discord_server(server_id),
+    discord_setting_id  INTEGER PRIMARY KEY AUTOINCREMENT,
+    discord_server_id   TEXT NOT NULL,
     setting_key         TEXT NOT NULL,
     setting_value       TEXT NOT NULL,
 
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_by          TEXT DEFAULT 'system'
+    updated_by          TEXT DEFAULT 'system',
+
+    FOREIGN KEY(discord_server_id) REFERENCES discord_server(server_id),
+    FOREIGN KEY(setting_key) REFERENCES setting(setting_name)
 );
