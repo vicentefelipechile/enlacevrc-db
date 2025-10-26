@@ -16,6 +16,7 @@ const mockDb = {
   prepare: vi.fn().mockReturnThis(),
   bind: vi.fn().mockReturnThis(),
   run: vi.fn(),
+  first: vi.fn(),
 };
 
 const localEnv = { ...env, DB: mockDb as any };
@@ -34,6 +35,8 @@ describe('AddDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
+    mockDb.first.mockResolvedValueOnce({ '1': 1 }) // Server exists
+                  .mockResolvedValueOnce({ '1': 1 }); // Setting exists
     mockDb.run.mockResolvedValue({ success: true });
 
     const response = await AddDiscordSetting(request, discordServerId, localEnv);
@@ -41,8 +44,8 @@ describe('AddDiscordSetting Handler', () => {
 
     expect(response.status).toBe(201);
     expect(responseBody).toEqual({ success: true, message: 'Discord setting added successfully' });
-    expect(mockDb.prepare).toHaveBeenCalledWith('INSERT INTO discord_settings (discord_server_id, setting_key, setting_value) VALUES (?, ?, ?)');
-    expect(mockDb.bind).toHaveBeenCalledWith(discordServerId, newSetting.setting_key, newSetting.setting_value);
+    expect(mockDb.prepare).toHaveBeenCalledWith('INSERT INTO discord_settings (discord_server_id, setting_key, setting_value, updated_by) VALUES (?, ?, ?, ?)');
+    expect(mockDb.bind).toHaveBeenCalledWith(discordServerId, newSetting.setting_key, newSetting.setting_value, 'system');
   });
 
   it('should return 400 for missing setting_key', async () => {
@@ -86,6 +89,8 @@ describe('AddDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
+    mockDb.first.mockResolvedValueOnce({ '1': 1 }) // Server exists
+                  .mockResolvedValueOnce({ '1': 1 }); // Setting exists
     mockDb.run.mockResolvedValue({ success: false });
 
     const response = await AddDiscordSetting(request, discordServerId, localEnv);

@@ -32,20 +32,32 @@ export async function AddDiscordSetting(request: Request, discordServerId: strin
             return ErrorResponse('Missing required fields: setting_key and setting_value are required', 400);
         }
 
+        // Validate foreign keys
+        const serverCheck = await env.DB.prepare('SELECT 1 FROM discord_server WHERE server_id = ?').bind(discordServerId).first();
+        if (!serverCheck) return ErrorResponse('Invalid discord_server_id: server does not exist', 400);
+
+        const settingCheck = await env.DB.prepare('SELECT 1 FROM setting WHERE setting_name = ?').bind(data.setting_key).first();
+        if (!settingCheck) return ErrorResponse('Invalid setting_key: setting does not exist', 400);
+
         // Variable extraction
         const {
             setting_key: settingKey,
-            setting_value: settingValue
+            setting_value: settingValue,
+            updated_by: updatedBy = 'system'
         } = data;
 
         // Statement preparation and execution
-        const statement = env.DB.prepare('INSERT INTO discord_settings (discord_server_id, setting_key, setting_value) VALUES (?, ?, ?)');
-        const { success } = await statement.bind(discordServerId, settingKey, settingValue).run();
+        const statement = env.DB.prepare('INSERT INTO discord_settings (discord_server_id, setting_key, setting_value, updated_by) VALUES (?, ?, ?, ?)');
+        const { success } = await statement.bind(discordServerId, settingKey, settingValue, updatedBy).run();
 
         // Database result handling
         if (!success) {
             return ErrorResponse('Failed to add Discord setting', 409);
         }
+
+        // Log the action
+        const logStmt = env.DB.prepare('INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)');
+        await logStmt.bind(1, `Discord setting added: ${settingKey} for server ${discordServerId}`, 'system').run();
 
         return SuccessResponse('Discord setting added successfully', 201);
     } catch (error) {

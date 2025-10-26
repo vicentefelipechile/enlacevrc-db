@@ -29,7 +29,7 @@ export async function DiscordServerExists(discordServerId: string, env: Env): Pr
         }
 
         // Statement preparation and execution
-        const statement = env.DB.prepare('SELECT 1 FROM discord_settings WHERE discord_server_id = ? LIMIT 1');
+        const statement = env.DB.prepare('SELECT 1 FROM discord_server WHERE server_id = ? LIMIT 1');
         const result = await statement.bind(discordServerId).first();
 
         // Database result handling

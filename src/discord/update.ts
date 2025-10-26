@@ -32,21 +32,37 @@ export async function UpdateDiscordSetting(request: Request, discordServerId: st
             return ErrorResponse('Missing required fields: setting_key and setting_value are required', 400);
         }
 
+        // Validate foreign keys
+        const serverCheck = await env.DB.prepare('SELECT 1 FROM discord_server WHERE server_id = ?').bind(discordServerId).first();
+        if (!serverCheck) return ErrorResponse('Invalid discord_server_id: server does not exist', 400);
+
+        const settingCheck = await env.DB.prepare('SELECT 1 FROM setting WHERE setting_name = ?').bind(data.setting_key).first();
+        if (!settingCheck) return ErrorResponse('Invalid setting_key: setting does not exist', 400);
+
         // Variable extraction
         const {
             setting_key: settingKey,
-            setting_value: settingValue
+            setting_value: settingValue,
+            updated_by: updatedBy = 'system'
         } = data;
 
         // Statement preparation and execution
-        const statement = env.DB.prepare('UPDATE discord_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE discord_server_id = ? AND setting_key = ?');
-        await statement.bind(settingValue, discordServerId, settingKey).run();
+        const statement = env.DB.prepare('UPDATE discord_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE discord_server_id = ? AND setting_key = ?');
+        const { success } = await statement.bind(settingValue, updatedBy, discordServerId, settingKey).run();
 
         // Database result handling
-        return SuccessResponse('Discord setting updated', 200);
+        if (success) {
+            // Log the action
+            const logStmt = env.DB.prepare('INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)');
+            await logStmt.bind(1, `Discord setting updated: ${settingKey} for server ${discordServerId}`, 'system').run();
+
+            return SuccessResponse('Discord setting updated', 200);
+        } else {
+            return ErrorResponse('Failed to update Discord setting', 500);
+        }
     } catch (e: unknown) {
         const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred';
-        console.error(`Error updating profile: ${errorMessage}`);
+        console.error(`Error updating Discord setting: ${errorMessage}`);
 
         if (errorMessage.includes('JSON')) {
             return ErrorResponse('Invalid JSON in request body', 400);

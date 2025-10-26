@@ -50,6 +50,10 @@ export async function DeleteDiscordSetting(request: Request, discordServerId: st
             return ErrorResponse('Failed to delete Discord setting. It may not exist', 404);
         }
 
+        // Log the action
+        const logStmt = env.DB.prepare('INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)');
+        await logStmt.bind(1, `Discord setting deleted: ${settingKey} for server ${discordServerId}`, 'system').run();
+
         return SuccessResponse('Discord setting deleted');
     } catch (error) {
         return ErrorResponse('Failed to delete Discord setting', 500);
