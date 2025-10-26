@@ -19,6 +19,7 @@ export interface BanReason {
     created_at: Date;
     created_by: string;
     updated_at: Date;
+    is_disabled: boolean;
 }
 
 /**
@@ -35,6 +36,21 @@ export interface SettingType {
 }
 
 /**
+ * @description Represents the type of verification the user going through.
+ * @interface VerificationType
+ */
+
+export interface VerificationType {
+    verification_type_id: number;
+    type_name: string;
+    description?: string;
+    created_at: Date;
+    created_by: string;
+    updated_at: Date;
+    is_disabled: boolean;
+}
+
+/**
  * @description Represents a setting in the database.
  * @interface Setting
  */
@@ -45,6 +61,7 @@ export interface Setting {
     created_at: Date;
     created_by: string;
     updated_at: Date;
+    is_disabled: boolean;
 }
 
 /**

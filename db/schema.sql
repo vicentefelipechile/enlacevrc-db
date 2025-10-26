@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS ban_reason (
     reason_text     TEXT NOT NULL UNIQUE,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by      TEXT DEFAULT 'system',
-    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_disabled     BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 /*
@@ -32,7 +33,8 @@ CREATE TABLE IF NOT EXISTS verification_type (
     description          TEXT NOT NULL,
     created_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by           TEXT DEFAULT 'system',
-    updated_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_disabled          BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 /*
@@ -61,6 +63,7 @@ CREATE TABLE IF NOT EXISTS setting (
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by          TEXT DEFAULT 'system',
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_disabled         BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY(setting_type_id) REFERENCES setting_type(setting_type_id)
 );
 
