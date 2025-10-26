@@ -29,14 +29,14 @@ describe('UpdateStaff Handler', () => {
   const staffId = 'staff_123';
 
   it('should update a staff member name successfully', async () => {
-    const updateData = { name: 'Updated Name' };
+    const updateData = { discord_name: 'Updated Name' };
     const request = new Request(`http://example.com/staff/${staffId}`, {
       method: 'PUT',
       body: JSON.stringify(updateData),
       headers: { 'Content-Type': 'application/json' },
     });
 
-    mockDb.first.mockResolvedValue({ discord_id: staffId, name: 'Old Name' });
+    mockDb.first.mockResolvedValue({ discord_id: staffId, discord_name: 'Old Name' });
     mockDb.run.mockResolvedValue({ success: true });
 
     const response = await UpdateStaff(request, staffId, localEnv);
@@ -44,8 +44,8 @@ describe('UpdateStaff Handler', () => {
 
     expect(response.status).toBe(200);
     expect(responseBody).toEqual({ success: true, message: 'Staff member updated successfully' });
-    expect(mockDb.prepare).toHaveBeenCalledWith('UPDATE staff SET name = ? WHERE discord_id = ?');
-    expect(mockDb.bind).toHaveBeenCalledWith(updateData.name, staffId);
+    expect(mockDb.prepare).toHaveBeenCalledWith('UPDATE staff SET discord_name = ? WHERE discord_id = ?');
+    expect(mockDb.bind).toHaveBeenCalledWith(updateData.discord_name, staffId);
   });
 
   it('should return 400 if no fields are provided for update', async () => {
@@ -75,11 +75,11 @@ describe('UpdateStaff Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
-    expect(responseBody).toEqual({ success: false, error: 'No valid fields provided to update. Only name can be updated' });
+    expect(responseBody).toEqual({ success: false, error: 'No valid fields provided to update. Only discord_name can be updated' });
   });
 
   it('should return 404 if the staff member to update does not exist', async () => {
-    const updateData = { name: 'New Name' };
+    const updateData = { discord_name: 'New Name' };
     const request = new Request(`http://example.com/staff/${staffId}`, {
       method: 'PUT',
       body: JSON.stringify(updateData),
@@ -96,14 +96,14 @@ describe('UpdateStaff Handler', () => {
   });
 
   it('should return 500 on database update failure', async () => {
-    const updateData = { name: 'New Name' };
+    const updateData = { discord_name: 'New Name' };
     const request = new Request(`http://example.com/staff/${staffId}`, {
       method: 'PUT',
       body: JSON.stringify(updateData),
       headers: { 'Content-Type': 'application/json' }
     });
 
-    mockDb.first.mockResolvedValue({ discord_id: staffId });
+    mockDb.first.mockResolvedValue({ discord_id: staffId, discord_name: 'Old Name' });
     mockDb.run.mockResolvedValue({ success: false });
 
     const response = await UpdateStaff(request, staffId, localEnv);

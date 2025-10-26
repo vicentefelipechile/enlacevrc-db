@@ -38,6 +38,10 @@ export async function DeleteStaff(staffId: string, env: Env): Promise<Response> 
 
         // Database result handling
         if (success) {
+            // Log the action
+            const logStmt = env.DB.prepare('INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)');
+            await logStmt.bind(1, `Staff member deleted: ${staffId}`, 'system').run();
+
             return SuccessResponse('Staff member deleted successfully');
         } else {
             return ErrorResponse('Failed to delete staff member', 500);

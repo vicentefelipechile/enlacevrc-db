@@ -41,19 +41,23 @@ export async function UpdateStaff(request: Request, staffId: string, env: Env): 
         }
 
         // Variable extraction
-        const { name } = dataStaffUpdate;
+        const { discord_name: discordName } = dataStaffUpdate;
 
         // Input validation for updateable fields
-        if (!name) {
-            return ErrorResponse('No valid fields provided to update. Only name can be updated', 400);
+        if (!discordName) {
+            return ErrorResponse('No valid fields provided to update. Only discord_name can be updated', 400);
         }
 
         // Statement preparation and execution
-        const statement = env.DB.prepare('UPDATE staff SET name = ? WHERE discord_id = ?');
-        const { success } = await statement.bind(name, staffId).run();
+        const statement = env.DB.prepare('UPDATE staff SET discord_name = ? WHERE discord_id = ?');
+        const { success } = await statement.bind(discordName, staffId).run();
 
         // Database result handling
         if (success) {
+            // Log the action
+            const logStmt = env.DB.prepare('INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)');
+            await logStmt.bind(1, `Staff member updated: ${staffId}`, 'system').run();
+
             return SuccessResponse('Staff member updated successfully');
         } else {
             return ErrorResponse('Failed to update staff member', 500);
