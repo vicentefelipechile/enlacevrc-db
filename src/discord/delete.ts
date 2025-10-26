@@ -32,18 +32,22 @@ export async function DeleteDiscordSetting(request: Request, discordServerId: st
             return ErrorResponse('Missing required field: setting_key is required', 400);
         }
 
+        // Find the generated server_id
+        const server = await env.DB.prepare('SELECT server_id FROM discord_server WHERE discord_server_id = ?').bind(discordServerId).first() as { server_id: string } | null;
+        if (!server) return ErrorResponse('Invalid discord_server_id: server does not exist', 400);
+
         // Variable extraction
         const { setting_key: settingKey } = data;
 
         // Statement preparation and execution
         const statementFound = env.DB.prepare('SELECT * FROM discord_settings WHERE discord_server_id = ? AND setting_key = ?');
-        const dataFound = await statementFound.bind(discordServerId, settingKey).first<DiscordSetting>();
+        const dataFound = await statementFound.bind(server.server_id, settingKey).first<DiscordSetting>();
         if (!dataFound) {
             return ErrorResponse('Discord setting not found', 404);
         }
 
         const statement = env.DB.prepare('DELETE FROM discord_settings WHERE discord_server_id = ? AND setting_key = ?');
-        const { success } = await statement.bind(discordServerId, settingKey).run();
+        const { success } = await statement.bind(server.server_id, settingKey).run();
 
         // Database result handling
         if (!success) {

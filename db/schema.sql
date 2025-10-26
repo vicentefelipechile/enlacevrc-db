@@ -106,6 +106,7 @@ CREATE TABLE IF NOT EXISTS log (
 
 CREATE TABLE IF NOT EXISTS discord_server (
     server_id          TEXT PRIMARY KEY,
+    discord_server_id TEXT NOT NULL UNIQUE,
     server_name        TEXT NOT NULL,
     added_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     added_by           TEXT NOT NULL
@@ -118,7 +119,7 @@ CREATE TABLE IF NOT EXISTS discord_server (
 */
 
 CREATE TABLE IF NOT EXISTS bot_admin (
-    admin_id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    admin_id        TEXT PRIMARY KEY,
     discord_id      TEXT NOT NULL UNIQUE,
     added_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     added_by        TEXT DEFAULT 'vicentefelipechile'
@@ -131,11 +132,11 @@ CREATE TABLE IF NOT EXISTS bot_admin (
 */
 
 CREATE TABLE IF NOT EXISTS staff (
-    staff_id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    staff_id        TEXT PRIMARY KEY,
     discord_id      TEXT NOT NULL UNIQUE,
     discord_name    TEXT,
     added_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    added_by        INTEGER NOT NULL,
+    added_by        TEXT NOT NULL,
     FOREIGN KEY(added_by) REFERENCES bot_admin(admin_id)
 );
 
@@ -145,7 +146,7 @@ CREATE TABLE IF NOT EXISTS staff (
 */
 
 CREATE TABLE IF NOT EXISTS profiles (
-    profile_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id      TEXT PRIMARY KEY,
     vrchat_id       TEXT NOT NULL UNIQUE,
     discord_id      TEXT NOT NULL,
     vrchat_name     TEXT NOT NULL,
@@ -155,13 +156,13 @@ CREATE TABLE IF NOT EXISTS profiles (
     is_banned       BOOLEAN NOT NULL DEFAULT FALSE,
     banned_at       TIMESTAMP NULL,
     banned_reason   INTEGER NULL,
-    banned_by       INTEGER NULL,
+    banned_by       TEXT NULL,
 
     is_verified     BOOLEAN NOT NULL DEFAULT FALSE,
     verification_method TEXT NOT NULL,
     verified_at     TIMESTAMP NULL,
     verified_from   TEXT NULL,
-    verified_by     INTEGER NULL,
+    verified_by     TEXT NULL,
 
     FOREIGN KEY(banned_reason) REFERENCES ban_reason(ban_reason_id),
     FOREIGN KEY(banned_by) REFERENCES staff(staff_id),
@@ -176,7 +177,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 */
 
 CREATE TABLE IF NOT EXISTS discord_settings (
-    discord_setting_id  INTEGER PRIMARY KEY AUTOINCREMENT,
+    discord_setting_id  TEXT PRIMARY KEY,
     discord_server_id   TEXT NOT NULL,
     setting_key         TEXT NOT NULL,
     setting_value       TEXT NOT NULL,

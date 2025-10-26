@@ -5,7 +5,7 @@
  */
 
 import { env } from 'cloudflare:test';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AddDiscordSetting } from '../../src/discord/add';
 
 // =================================================================================================
@@ -21,6 +21,17 @@ const mockDb = {
 
 const localEnv = { ...env, DB: mockDb as any };
 
+// Mock crypto.randomUUID
+beforeEach(() => {
+  vi.stubGlobal('crypto', {
+    randomUUID: vi.fn(() => '123e4567-e89b-12d3-a456-426614174000'),
+  });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 // =================================================================================================
 // Test Suite
 // =================================================================================================
@@ -35,7 +46,7 @@ describe('AddDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    mockDb.first.mockResolvedValueOnce({ '1': 1 }) // Server exists
+    mockDb.first.mockResolvedValueOnce({ server_id: 'srv_123e4567-e89b-12d3-a456-426614174000' }) // Server exists
                   .mockResolvedValueOnce({ '1': 1 }); // Setting exists
     mockDb.run.mockResolvedValue({ success: true });
 
@@ -44,8 +55,8 @@ describe('AddDiscordSetting Handler', () => {
 
     expect(response.status).toBe(201);
     expect(responseBody).toEqual({ success: true, message: 'Discord setting added successfully' });
-    expect(mockDb.prepare).toHaveBeenCalledWith('INSERT INTO discord_settings (discord_server_id, setting_key, setting_value, updated_by) VALUES (?, ?, ?, ?)');
-    expect(mockDb.bind).toHaveBeenCalledWith(discordServerId, newSetting.setting_key, newSetting.setting_value, 'system');
+    expect(mockDb.prepare).toHaveBeenCalledWith('INSERT INTO discord_settings (discord_setting_id, discord_server_id, setting_key, setting_value, updated_by) VALUES (?, ?, ?, ?, ?)');
+    expect(mockDb.bind).toHaveBeenCalledWith('dst_123e4567-e89b-12d3-a456-426614174000', 'srv_123e4567-e89b-12d3-a456-426614174000', newSetting.setting_key, newSetting.setting_value, 'system');
   });
 
   it('should return 400 for missing setting_key', async () => {

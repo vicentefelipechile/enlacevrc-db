@@ -27,12 +27,15 @@ export async function AddProfile(request: Request, env: Env): Promise<Response> 
         const newProfileData: Partial<Profile> = await request.json();
 
         // Basic validation
-        if (!newProfileData.vrchat_id || !newProfileData.discord_id || !newProfileData.vrchat_name) {
-            return ErrorResponse('Missing required fields: vrchat_id, discord_id, and vrchat_name are required', 400);
+        if (!newProfileData.vrchat_id || !newProfileData.discord_id || !newProfileData.vrchat_name || !newProfileData.verification_method) {
+            return ErrorResponse('Missing required fields: vrchat_id, discord_id, vrchat_name, and verification_method are required', 400);
         }
 
+        // Generate new profile ID
+        const profileId = `prf_${crypto.randomUUID()}`;
+
         // Variable extraction
-        const {
+        let {
             vrchat_id: vrchatId,
             discord_id: discordId,
             vrchat_name: vrchatName,
@@ -41,6 +44,7 @@ export async function AddProfile(request: Request, env: Env): Promise<Response> 
             banned_reason: bannedReason,
             banned_by: bannedBy,
             is_verified: isVerified = false,
+            verification_method: verificationMethod,
             verified_at: verifiedAt,
             verified_from: verifiedFrom,
             verified_by: verifiedBy
@@ -56,8 +60,9 @@ export async function AddProfile(request: Request, env: Env): Promise<Response> 
             if (!staffCheck) return ErrorResponse('Invalid banned_by: staff member does not exist', 400);
         }
         if (verifiedFrom !== undefined) {
-            const serverCheck = await env.DB.prepare('SELECT 1 FROM discord_server WHERE server_id = ?').bind(verifiedFrom).first();
-            if (!serverCheck) return ErrorResponse('Invalid verified_from: discord server does not exist', 400);
+            const server = await env.DB.prepare('SELECT server_id FROM discord_server WHERE discord_server_id = ?').bind(verifiedFrom).first() as { server_id: string } | null;
+            if (!server) return ErrorResponse('Invalid verified_from: discord server does not exist', 400);
+            verifiedFrom = server.server_id; // Update to generated ID
         }
         if (verifiedBy !== undefined) {
             const staffCheck = await env.DB.prepare('SELECT 1 FROM staff WHERE staff_id = ?').bind(verifiedBy).first();
@@ -67,13 +72,13 @@ export async function AddProfile(request: Request, env: Env): Promise<Response> 
         // Statement preparation and execution
         const statement = env.DB.prepare(`
             INSERT INTO profiles (
-                vrchat_id, discord_id, vrchat_name, is_banned, banned_at, banned_reason, banned_by,
-                is_verified, verified_at, verified_from, verified_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                profile_id, vrchat_id, discord_id, vrchat_name, is_banned, banned_at, banned_reason, banned_by,
+                is_verified, verification_method, verified_at, verified_from, verified_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
         const { success, meta } = await statement.bind(
-            vrchatId, discordId, vrchatName, isBanned ? 1 : 0, bannedAt, bannedReason, bannedBy,
-            isVerified ? 1 : 0, verifiedAt, verifiedFrom, verifiedBy
+            profileId, vrchatId, discordId, vrchatName, isBanned ? 1 : 0, bannedAt, bannedReason, bannedBy,
+            isVerified ? 1 : 0, verificationMethod, verifiedAt, verifiedFrom, verifiedBy
         ).run();
 
         // Database result handling

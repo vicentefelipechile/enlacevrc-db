@@ -5,7 +5,7 @@
  */
 
 import { env } from 'cloudflare:test';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AddProfile } from '../../src/profile/add';
 
 // =================================================================================================
@@ -20,13 +20,24 @@ const mockDb = {
 
 const localEnv = { ...env, DB: mockDb as any };
 
+// Mock crypto.randomUUID
+beforeEach(() => {
+  vi.stubGlobal('crypto', {
+    randomUUID: vi.fn(() => '123e4567-e89b-12d3-a456-426614174000'),
+  });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 // =================================================================================================
 // Test Suite
 // =================================================================================================
 
 describe('AddProfile Handler', () => {
   it('should add a profile successfully', async () => {
-    const newProfile = { vrchat_id: 'usr_123', discord_id: 'discord_456', vrchat_name: 'Test User' };
+    const newProfile = { vrchat_id: 'usr_123', discord_id: 'discord_456', vrchat_name: 'Test User', verification_method: 'Discord Staff' };
     const request = new Request('http://example.com/profiles', {
       method: 'POST',
       body: JSON.stringify(newProfile),
@@ -42,11 +53,11 @@ describe('AddProfile Handler', () => {
     expect(responseBody).toEqual({ success: true, message: 'Profile created successfully' });
     expect(mockDb.prepare).toHaveBeenCalledWith(`
             INSERT INTO profiles (
-                vrchat_id, discord_id, vrchat_name, is_banned, banned_at, banned_reason, banned_by,
-                is_verified, verified_at, verified_from, verified_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                profile_id, vrchat_id, discord_id, vrchat_name, is_banned, banned_at, banned_reason, banned_by,
+                is_verified, verification_method, verified_at, verified_from, verified_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
-    expect(mockDb.bind).toHaveBeenCalledWith(newProfile.vrchat_id, newProfile.discord_id, newProfile.vrchat_name, 0, undefined, undefined, undefined, 0, undefined, undefined, undefined);
+    expect(mockDb.bind).toHaveBeenCalledWith('prf_123e4567-e89b-12d3-a456-426614174000', newProfile.vrchat_id, newProfile.discord_id, newProfile.vrchat_name, 0, undefined, undefined, undefined, 0, newProfile.verification_method, undefined, undefined, undefined);
   });
 
   it('should return 400 for missing required fields', async () => {
@@ -61,7 +72,7 @@ describe('AddProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
-    expect(responseBody).toEqual({ success: false, error: 'Missing required fields: vrchat_id, discord_id, and vrchat_name are required' });
+    expect(responseBody).toEqual({ success: false, error: 'Missing required fields: vrchat_id, discord_id, vrchat_name, and verification_method are required' });
   });
 
   it('should return 400 for invalid JSON', async () => {
@@ -79,7 +90,7 @@ describe('AddProfile Handler', () => {
   });
 
   it('should return 409 if the profile already exists', async () => {
-    const newProfile = { vrchat_id: 'usr_123', discord_id: 'discord_456', vrchat_name: 'Test User' };
+    const newProfile = { vrchat_id: 'usr_123', discord_id: 'discord_456', vrchat_name: 'Test User', verification_method: 'Discord Staff' };
     const request = new Request('http://example.com/profiles', {
       method: 'POST',
       body: JSON.stringify(newProfile),
@@ -96,7 +107,7 @@ describe('AddProfile Handler', () => {
   });
 
   it('should return 500 for unexpected errors', async () => {
-    const newProfile = { vrchat_id: 'usr_123', discord_id: 'discord_456', vrchat_name: 'Test User' };
+    const newProfile = { vrchat_id: 'usr_123', discord_id: 'discord_456', vrchat_name: 'Test User', verification_method: 'Discord Staff' };
     const request = new Request('http://example.com/profiles', {
       method: 'POST',
       body: JSON.stringify(newProfile),

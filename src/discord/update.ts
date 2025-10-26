@@ -32,9 +32,9 @@ export async function UpdateDiscordSetting(request: Request, discordServerId: st
             return ErrorResponse('Missing required fields: setting_key and setting_value are required', 400);
         }
 
-        // Validate foreign keys
-        const serverCheck = await env.DB.prepare('SELECT 1 FROM discord_server WHERE server_id = ?').bind(discordServerId).first();
-        if (!serverCheck) return ErrorResponse('Invalid discord_server_id: server does not exist', 400);
+        // Find the generated server_id
+        const server = await env.DB.prepare('SELECT server_id FROM discord_server WHERE discord_server_id = ?').bind(discordServerId).first() as { server_id: string } | null;
+        if (!server) return ErrorResponse('Invalid discord_server_id: server does not exist', 400);
 
         const settingCheck = await env.DB.prepare('SELECT 1 FROM setting WHERE setting_name = ?').bind(data.setting_key).first();
         if (!settingCheck) return ErrorResponse('Invalid setting_key: setting does not exist', 400);
@@ -48,7 +48,7 @@ export async function UpdateDiscordSetting(request: Request, discordServerId: st
 
         // Statement preparation and execution
         const statement = env.DB.prepare('UPDATE discord_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE discord_server_id = ? AND setting_key = ?');
-        const { success } = await statement.bind(settingValue, updatedBy, discordServerId, settingKey).run();
+        const { success } = await statement.bind(settingValue, updatedBy, server.server_id, settingKey).run();
 
         // Database result handling
         if (success) {

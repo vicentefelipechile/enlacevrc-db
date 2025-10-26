@@ -35,11 +35,17 @@ export async function GetDiscordSetting(request: Request, discordServerId: strin
         const url = new URL(request.url);
         const getAllSettings = url.searchParams.get('getallsettings');
 
+        // Find the generated server_id
+        const server = await env.DB.prepare('SELECT server_id FROM discord_server WHERE discord_server_id = ?').bind(discordServerId).first() as { server_id: string } | null;
+        if (!server) {
+            return ErrorResponse('Discord server not found', 404);
+        }
+
         // All settings retrieval
         if (getAllSettings === 'true') {
             // Statement preparation and execution
             const statement = env.DB.prepare('SELECT setting_key, setting_value FROM discord_settings WHERE discord_server_id = ?');
-            const result = await statement.bind(discordServerId).all<DiscordSetting>();
+            const result = await statement.bind(server.server_id).all<DiscordSetting>();
 
             // Database result handling
             if (!result.success || result.results.length === 0) {
@@ -61,7 +67,7 @@ export async function GetDiscordSetting(request: Request, discordServerId: strin
 
         // Statement preparation and execution
         const statement = env.DB.prepare('SELECT setting_value FROM discord_settings WHERE discord_server_id = ? AND setting_key = ?');
-        const result = await statement.bind(discordServerId, settingKey).first<SettingKeyValue>();
+        const result = await statement.bind(server.server_id, settingKey).first<SettingKeyValue>();
 
         // Database result handling
         if (!result) {

@@ -18,7 +18,7 @@ import { ErrorResponse, SuccessResponse } from '../responses';
 /**
  * @description Adds a new Discord setting by its Discord server ID, setting key, and setting value to the database.
  * @param {Request} request The incoming Request object containing setting_key and setting_value in the JSON body.
- * @param {string} discordServerId The ID of the Discord server.
+ * @param {string} discordServerId The real Discord server ID.
  * @param {Env} env The Cloudflare Worker environment object.
  * @returns {Promise<Response>} A response indicating the result of the addition operation.
  */
@@ -32,12 +32,21 @@ export async function AddDiscordSetting(request: Request, discordServerId: strin
             return ErrorResponse('Missing required fields: setting_key and setting_value are required', 400);
         }
 
-        // Validate foreign keys
-        const serverCheck = await env.DB.prepare('SELECT 1 FROM discord_server WHERE server_id = ?').bind(discordServerId).first();
-        if (!serverCheck) return ErrorResponse('Invalid discord_server_id: server does not exist', 400);
+        // Validate and ensure server exists
+        let server = await env.DB.prepare('SELECT server_id FROM discord_server WHERE discord_server_id = ?').bind(discordServerId).first() as { server_id: string } | null;
+        if (!server) {
+            // Server does not exist, add it
+            const generatedServerId = `srv_${crypto.randomUUID()}`;
+            const insertServer = env.DB.prepare('INSERT INTO discord_server (server_id, discord_server_id, server_name, added_by) VALUES (?, ?, ?, ?)');
+            await insertServer.bind(generatedServerId, discordServerId, 'Unknown Server', 'system').run();
+            server = { server_id: generatedServerId };
+        }
 
         const settingCheck = await env.DB.prepare('SELECT 1 FROM setting WHERE setting_name = ?').bind(data.setting_key).first();
         if (!settingCheck) return ErrorResponse('Invalid setting_key: setting does not exist', 400);
+
+        // Generate new discord setting ID
+        const discordSettingId = `dst_${crypto.randomUUID()}`;
 
         // Variable extraction
         const {
@@ -47,8 +56,8 @@ export async function AddDiscordSetting(request: Request, discordServerId: strin
         } = data;
 
         // Statement preparation and execution
-        const statement = env.DB.prepare('INSERT INTO discord_settings (discord_server_id, setting_key, setting_value, updated_by) VALUES (?, ?, ?, ?)');
-        const { success } = await statement.bind(discordServerId, settingKey, settingValue, updatedBy).run();
+        const statement = env.DB.prepare('INSERT INTO discord_settings (discord_setting_id, discord_server_id, setting_key, setting_value, updated_by) VALUES (?, ?, ?, ?, ?)');
+        const { success } = await statement.bind(discordSettingId, server.server_id, settingKey, settingValue, updatedBy).run();
 
         // Database result handling
         if (!success) {

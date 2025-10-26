@@ -94,7 +94,8 @@ export interface Log {
  * @interface DiscordServer
  */
 export interface DiscordServer {
-    server_id: string;
+    server_id: `srv_${string}`;
+    discord_server_id: string;
     server_name: string;
     added_at: Date;
     added_by: string;
@@ -105,7 +106,7 @@ export interface DiscordServer {
  * @interface BotAdmin
  */
 export interface BotAdmin {
-    admin_id: number;
+    admin_id: `adm_${string}`;
     discord_id: string;
     added_at: Date;
     added_by: string;
@@ -116,11 +117,11 @@ export interface BotAdmin {
  * @interface Staff
  */
 export interface Staff {
-    staff_id: number;
+    staff_id: `stf_${string}`;
     discord_id: string;
     discord_name?: string;
     added_at: Date;
-    added_by: number;
+    added_by: string;
 }
 
 /**
@@ -128,20 +129,23 @@ export interface Staff {
  * @interface Profile
  */
 export interface Profile {
-    profile_id: number;
+    profile_id: `prf_${string}`;
     vrchat_id: string;
     discord_id: string;
     vrchat_name: string;
     added_at: Date;
     updated_at: Date;
+
     is_banned: boolean | number;
     banned_at?: Date;
     banned_reason?: number;
-    banned_by?: number;
+    banned_by?: string;
+
     is_verified: boolean | number;
+    verification_method: number;
     verified_at?: Date;
     verified_from?: string;
-    verified_by?: number;
+    verified_by?: `stf_${string}`;
 }
 
 /**
@@ -149,7 +153,7 @@ export interface Profile {
  * @interface DiscordSetting
  */
 export interface DiscordSetting {
-    discord_setting_id: number;
+    discord_setting_id: `dst_${string}`;
     discord_server_id: string;
     setting_key: string;
     setting_value: string;

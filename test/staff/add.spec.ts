@@ -5,7 +5,7 @@
  */
 
 import { env } from 'cloudflare:test';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AddStaff } from '../../src/staff/add';
 
 // =================================================================================================
@@ -20,6 +20,17 @@ const mockDb = {
 };
 
 const localEnv = { ...env, DB: mockDb as any };
+
+// Mock crypto.randomUUID
+beforeEach(() => {
+  vi.stubGlobal('crypto', {
+    randomUUID: vi.fn(() => '123e4567-e89b-12d3-a456-426614174000'),
+  });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 // =================================================================================================
 // Test Suite
@@ -42,8 +53,8 @@ describe('AddStaff Handler', () => {
 
     expect(response.status).toBe(201);
     expect(responseBody).toEqual({ success: true, message: 'Staff member added successfully' });
-    expect(mockDb.prepare).toHaveBeenCalledWith('INSERT INTO staff (discord_id, discord_name, added_by) VALUES (?, ?, ?)');
-    expect(mockDb.bind).toHaveBeenCalledWith(newStaff.discord_id, newStaff.discord_name, newStaff.added_by);
+    expect(mockDb.prepare).toHaveBeenCalledWith('INSERT INTO staff (staff_id, discord_id, discord_name, added_by) VALUES (?, ?, ?, ?)');
+    expect(mockDb.bind).toHaveBeenCalledWith('stf_123e4567-e89b-12d3-a456-426614174000', newStaff.discord_id, newStaff.discord_name, newStaff.added_by);
   });
 
   it('should return 400 for missing discord_id', async () => {

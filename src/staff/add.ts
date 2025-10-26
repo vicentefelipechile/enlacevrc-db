@@ -35,6 +35,9 @@ export async function AddStaff(request: Request, env: Env): Promise<Response> {
         const adminCheck = await env.DB.prepare('SELECT 1 FROM bot_admin WHERE admin_id = ?').bind(newStaffData.added_by).first();
         if (!adminCheck) return ErrorResponse('Invalid added_by: bot admin does not exist', 400);
 
+        // Generate new staff ID
+        const staffId = `stf_${crypto.randomUUID()}`;
+
         // Variable extraction
         const {
             discord_id: discordId,
@@ -43,8 +46,8 @@ export async function AddStaff(request: Request, env: Env): Promise<Response> {
         } = newStaffData;
 
         // Statement preparation and execution
-        const statement = env.DB.prepare('INSERT INTO staff (discord_id, discord_name, added_by) VALUES (?, ?, ?)');
-        const { success } = await statement.bind(discordId, discordName, addedBy).run();
+        const statement = env.DB.prepare('INSERT INTO staff (staff_id, discord_id, discord_name, added_by) VALUES (?, ?, ?, ?)');
+        const { success } = await statement.bind(staffId, discordId, discordName, addedBy).run();
 
         // Database result handling
         if (success) {

@@ -60,11 +60,11 @@ INSERT INTO verification_type (type_name, description) VALUES
 INSERT INTO log (log_level_id, log_message) VALUES
     (2, 'Added predefined ban reasons to ban_reason table');
 
-INSERT INTO bot_admin (discord_id, added_by) VALUES
-    ('356253258613915663', 'system');
+INSERT INTO bot_admin (admin_id, discord_id, added_by) VALUES
+    ('adm_123e4567-e89b-12d3-a456-426614174000', '356253258613915663', 'system');
 
-INSERT INTO staff (discord_id, discord_name, added_by) VALUES
-    ('356253258613915663', 'vicentefelipechile', 1);
+INSERT INTO staff (staff_id, discord_id, discord_name, added_by) VALUES
+    ('stf_123e4567-e89b-12d3-a456-426614174001', '356253258613915663', 'vicentefelipechile', 'adm_123e4567-e89b-12d3-a456-426614174000');
 
 INSERT INTO log (log_level_id, log_message) VALUES
     (2, 'Added initial bot admin and staff member');
