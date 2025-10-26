@@ -51,6 +51,10 @@ export async function DeleteProfile(profileId: string, env: Env): Promise<Respon
 
         // Database result handling
         if (success) {
+            // Log the action
+            const logStmt = env.DB.prepare('INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)');
+            await logStmt.bind(1, `Profile deleted: ${vrchatId}`, 'system').run();
+
             return SuccessResponse('Profile deleted successfully.');
         } else {
             return ErrorResponse('Failed to delete profile.', 500);

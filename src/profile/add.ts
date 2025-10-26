@@ -35,18 +35,55 @@ export async function AddProfile(request: Request, env: Env): Promise<Response> 
         const {
             vrchat_id: vrchatId,
             discord_id: discordId,
-            vrchat_name: vrchatName
+            vrchat_name: vrchatName,
+            is_banned: isBanned = false,
+            banned_at: bannedAt,
+            banned_reason: bannedReason,
+            banned_by: bannedBy,
+            is_verified: isVerified = false,
+            verified_at: verifiedAt,
+            verified_from: verifiedFrom,
+            verified_by: verifiedBy
         } = newProfileData;
 
+        // Validate foreign keys if provided
+        if (bannedReason !== undefined) {
+            const banReasonCheck = await env.DB.prepare('SELECT 1 FROM ban_reason WHERE ban_reason_id = ?').bind(bannedReason).first();
+            if (!banReasonCheck) return ErrorResponse('Invalid banned_reason: ban reason does not exist', 400);
+        }
+        if (bannedBy !== undefined) {
+            const staffCheck = await env.DB.prepare('SELECT 1 FROM staff WHERE staff_id = ?').bind(bannedBy).first();
+            if (!staffCheck) return ErrorResponse('Invalid banned_by: staff member does not exist', 400);
+        }
+        if (verifiedFrom !== undefined) {
+            const serverCheck = await env.DB.prepare('SELECT 1 FROM discord_server WHERE server_id = ?').bind(verifiedFrom).first();
+            if (!serverCheck) return ErrorResponse('Invalid verified_from: discord server does not exist', 400);
+        }
+        if (verifiedBy !== undefined) {
+            const staffCheck = await env.DB.prepare('SELECT 1 FROM staff WHERE staff_id = ?').bind(verifiedBy).first();
+            if (!staffCheck) return ErrorResponse('Invalid verified_by: staff member does not exist', 400);
+        }
+
         // Statement preparation and execution
-        const statement = env.DB.prepare('INSERT INTO profiles (vrchat_id, discord_id, vrchat_name) VALUES (?, ?, ?)');
-        const { success } = await statement.bind(vrchatId, discordId, vrchatName).run();
+        const statement = env.DB.prepare(`
+            INSERT INTO profiles (
+                vrchat_id, discord_id, vrchat_name, is_banned, banned_at, banned_reason, banned_by,
+                is_verified, verified_at, verified_from, verified_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        const { success, meta } = await statement.bind(
+            vrchatId, discordId, vrchatName, isBanned ? 1 : 0, bannedAt, bannedReason, bannedBy,
+            isVerified ? 1 : 0, verifiedAt, verifiedFrom, verifiedBy
+        ).run();
 
         // Database result handling
         if (success) {
+            // Log the action
+            const logStmt = env.DB.prepare('INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)');
+            await logStmt.bind(1, `Profile added: ${vrchatId}`, 'system').run(); // Assuming log_level_id 1 is INFO
+
             return SuccessResponse('Profile created successfully', 201);
         } else {
-            // 409 Conflict is more specific
             return ErrorResponse('Failed to create profile. It may already exist', 409);
         }
     } catch (e: unknown) {

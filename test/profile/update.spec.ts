@@ -5,7 +5,7 @@
  */
 
 import { env } from 'cloudflare:test';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UpdateProfile } from '../../src/profile/update';
 
 // =================================================================================================
@@ -28,6 +28,10 @@ const localEnv = { ...env, DB: mockDb as any };
 describe('UpdateProfile Handler', () => {
   const profileId = 'usr_123';
 
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('should update a profile name successfully', async () => {
     const updateData = { vrchat_name: 'New Name' };
     const request = new Request(`http://example.com/profiles/${profileId}`, {
@@ -45,7 +49,7 @@ describe('UpdateProfile Handler', () => {
     expect(response.status).toBe(200);
     expect(responseBody).toEqual({ success: true, message: 'Profile updated successfully' });
     expect(mockDb.prepare).toHaveBeenCalledWith(`UPDATE profiles SET vrchat_name = ?, updated_at = CURRENT_TIMESTAMP WHERE vrchat_id = ?`);
-    expect(mockDb.bind).toHaveBeenCalledWith(updateData.vrchat_name, profileId);
+    expect(mockDb.bind).toHaveBeenNthCalledWith(2, updateData.vrchat_name, profileId);
   });
 
   it('should update verification status successfully', async () => {
@@ -65,7 +69,7 @@ describe('UpdateProfile Handler', () => {
     expect(response.status).toBe(200);
     expect(responseBody).toEqual({ success: true, message: 'Profile updated successfully' });
     expect(mockDb.prepare).toHaveBeenCalledWith(`UPDATE profiles SET is_verified = ?, verified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE vrchat_id = ?`);
-    expect(mockDb.bind).toHaveBeenCalledWith('1', profileId);
+    expect(mockDb.bind).toHaveBeenNthCalledWith(2, 1, profileId);
   });
 
   it('should update ban status successfully', async () => {
@@ -85,7 +89,7 @@ describe('UpdateProfile Handler', () => {
     expect(response.status).toBe(200);
     expect(responseBody).toEqual({ success: true, message: 'Profile updated successfully' });
     expect(mockDb.prepare).toHaveBeenCalledWith(`UPDATE profiles SET is_banned = ?, banned_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE vrchat_id = ?`);
-    expect(mockDb.bind).toHaveBeenCalledWith('1', profileId);
+    expect(mockDb.bind).toHaveBeenNthCalledWith(2, 1, profileId);
   });
 
   it('should return 400 if no fields are provided for update', async () => {

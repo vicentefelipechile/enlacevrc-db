@@ -52,27 +52,49 @@ export async function UpdateProfile(request: Request, profileId: string, env: En
             discord_id: discordId,
             is_verified: isVerified,
             is_banned: isBanned,
+            banned_reason: bannedReason,
+            banned_by: bannedBy,
+            verified_from: verifiedFrom,
+            verified_by: verifiedBy
         } = dataProfileUpdate;
+
+        // Validate foreign keys if provided
+        if (bannedReason !== undefined) {
+            const banReasonCheck = await env.DB.prepare('SELECT 1 FROM ban_reason WHERE ban_reason_id = ?').bind(bannedReason).first();
+            if (!banReasonCheck) return ErrorResponse('Invalid banned_reason: ban reason does not exist', 400);
+        }
+        if (bannedBy !== undefined) {
+            const staffCheck = await env.DB.prepare('SELECT 1 FROM staff WHERE staff_id = ?').bind(bannedBy).first();
+            if (!staffCheck) return ErrorResponse('Invalid banned_by: staff member does not exist', 400);
+        }
+        if (verifiedFrom !== undefined) {
+            const serverCheck = await env.DB.prepare('SELECT 1 FROM discord_server WHERE server_id = ?').bind(verifiedFrom).first();
+            if (!serverCheck) return ErrorResponse('Invalid verified_from: discord server does not exist', 400);
+        }
+        if (verifiedBy !== undefined) {
+            const staffCheck = await env.DB.prepare('SELECT 1 FROM staff WHERE staff_id = ?').bind(verifiedBy).first();
+            if (!staffCheck) return ErrorResponse('Invalid verified_by: staff member does not exist', 400);
+        }
 
         const { vrchat_id: vrchatId } = profile;
 
         // Statement construction
         const fields: string[] = [];
-        const values: (string | null)[] = [];
+        const values: (string | number | null)[] = [];
 
-        if (vrchatName) {
+        if (vrchatName !== undefined) {
             fields.push('vrchat_name = ?');
             values.push(vrchatName);
         }
 
-        if (discordId) {
+        if (discordId !== undefined) {
             fields.push('discord_id = ?');
             values.push(discordId);
         }
 
         if (isVerified !== undefined) {
             fields.push('is_verified = ?');
-            values.push(isVerified ? '1' : '0');
+            values.push(isVerified ? 1 : 0);
 
             if (isVerified) {
                 fields.push('verified_at = CURRENT_TIMESTAMP');
@@ -83,13 +105,33 @@ export async function UpdateProfile(request: Request, profileId: string, env: En
 
         if (isBanned !== undefined) {
             fields.push('is_banned = ?');
-            values.push(isBanned ? '1' : '0');
+            values.push(isBanned ? 1 : 0);
 
             if (isBanned) {
                 fields.push('banned_at = CURRENT_TIMESTAMP');
             } else {
                 fields.push('banned_at = NULL');
             }
+        }
+
+        if (bannedReason !== undefined) {
+            fields.push('banned_reason = ?');
+            values.push(bannedReason);
+        }
+
+        if (bannedBy !== undefined) {
+            fields.push('banned_by = ?');
+            values.push(bannedBy);
+        }
+
+        if (verifiedFrom !== undefined) {
+            fields.push('verified_from = ?');
+            values.push(verifiedFrom);
+        }
+
+        if (verifiedBy !== undefined) {
+            fields.push('verified_by = ?');
+            values.push(verifiedBy);
         }
 
         fields.push('updated_at = CURRENT_TIMESTAMP');
@@ -101,6 +143,10 @@ export async function UpdateProfile(request: Request, profileId: string, env: En
 
         // Database result handling
         if (success) {
+            // Log the action
+            const logStmt = env.DB.prepare('INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)');
+            await logStmt.bind(1, `Profile updated: ${vrchatId}`, 'system').run();
+
             return SuccessResponse('Profile updated successfully');
         } else {
             return ErrorResponse('Failed to update profile', 500);

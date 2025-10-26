@@ -40,8 +40,13 @@ describe('AddProfile Handler', () => {
 
     expect(response.status).toBe(201);
     expect(responseBody).toEqual({ success: true, message: 'Profile created successfully' });
-    expect(mockDb.prepare).toHaveBeenCalledWith('INSERT INTO profiles (vrchat_id, discord_id, vrchat_name) VALUES (?, ?, ?)');
-    expect(mockDb.bind).toHaveBeenCalledWith(newProfile.vrchat_id, newProfile.discord_id, newProfile.vrchat_name);
+    expect(mockDb.prepare).toHaveBeenCalledWith(`
+            INSERT INTO profiles (
+                vrchat_id, discord_id, vrchat_name, is_banned, banned_at, banned_reason, banned_by,
+                is_verified, verified_at, verified_from, verified_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+    expect(mockDb.bind).toHaveBeenCalledWith(newProfile.vrchat_id, newProfile.discord_id, newProfile.vrchat_name, 0, undefined, undefined, undefined, 0, undefined, undefined, undefined);
   });
 
   it('should return 400 for missing required fields', async () => {
