@@ -23,6 +23,8 @@ import { AddStaff } from './staff/add';
 import { GetStaff } from './staff/get';
 import { UpdateStaff } from './staff/update';
 import { DeleteStaff } from './staff/delete';
+import { GetLogs } from './logs/get';
+import { ValidateAdminAccess } from './logs/validate-admin';
 
 // =================================================================================================
 // Helper Functions
@@ -132,6 +134,24 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
             default:
                 return ErrorResponse(`Method ${request.method} not allowed`, 405);
         }
+    }
+
+    // SECURE ENDPOINTS - Logs (Admin Only)
+    if (pathParts[0] === 'logs') {
+        switch (request.method) {
+            case 'GET':
+                return GetLogs(request, env);
+            default:
+                return ErrorResponse(`Method ${request.method} not allowed`, 405);
+        }
+    }
+
+    // Admin validation endpoint
+    if (pathParts[0] === 'auth' && pathParts[1] === 'validate-admin') {
+        if (request.method === 'GET') {
+            return ValidateAdminAccess(request, env);
+        }
+        return ErrorResponse(`Method ${request.method} not allowed`, 405);
     }
 
     return ErrorResponse('Not Found', 404);

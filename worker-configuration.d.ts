@@ -7,6 +7,7 @@ declare namespace Cloudflare {
 	}
 	interface Env {
 		PRIVATE_KEY: string;
+		API_KEY: string;
 		DB: D1Database;
 	}
 }
