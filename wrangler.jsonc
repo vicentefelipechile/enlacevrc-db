@@ -16,7 +16,7 @@
 			"database_name": "enlacevrc-db",
 			"database_id": "e14990e7-f3d0-485e-9bfa-656ad7d49925"
 		}
-	],
+	]
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

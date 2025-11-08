@@ -74,8 +74,10 @@ export async function GetLogs(request: Request, env: Env): Promise<Response> {
         }
 
         // Log this access for audit purposes
-        const discordId = request.headers.get('x-discord-id')!;
+        const discordId = request.headers.get('X-Discord-ID')!;
+        const discordName = request.headers.get('X-Discord-Name')!;
         await logAccess(env, discordId, 'LOG_ACCESS', `Accessed logs with filters: ${JSON.stringify(Object.fromEntries(url.searchParams))}`);
+        await LogIt(env.DB, LogLevel.INFO, `Logs retrieved by admin ${discordName} (${discordId})`);
 
         return JsonResponse({
             success: true,

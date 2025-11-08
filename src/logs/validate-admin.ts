@@ -31,10 +31,10 @@ export async function ValidateAdminAccess(request: Request, env: Env): Promise<R
         }
 
         // Extract Discord ID from request headers
-        const discordId = request.headers.get('x-discord-id');
+        const discordId = request.headers.get('X-Discord-ID');
 
         if (!discordId) {
-            return ErrorResponse('Missing header: x-discord-id', 400);
+            return ErrorResponse('Missing header: X-Discord-ID', 400);
         }
 
         // Validate admin status

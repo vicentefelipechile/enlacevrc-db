@@ -13,10 +13,10 @@ import { ErrorResponse } from '../responses';
 
 /**
  * Validates API key from request headers
- * API key must be provided in x-api-key header
+ * API key must be provided in X-Api-Key header
  */
 export async function validateApiKey(request: Request, env: Env): Promise<boolean> {
-    const apiKey = request.headers.get('x-api-key');
+    const apiKey = request.headers.get('X-Api-Key');
     
     if (!apiKey) {
         return false;
@@ -70,7 +70,7 @@ export async function requireAuth(request: Request, env: Env): Promise<Response 
     }
     
     // Extract Discord ID from request (from header or body)
-    const discordId = request.headers.get('x-discord-id');
+    const discordId = request.headers.get('X-Discord-ID');
     
     if (!discordId) {
         return ErrorResponse('Unauthorized: Discord ID required', 401);
@@ -92,7 +92,7 @@ export async function requireAuth(request: Request, env: Env): Promise<Response 
  */
 export function extractDiscordId(request: Request): string | null {
     // Try header first
-    const headerDiscordId = request.headers.get('x-discord-id');
+    const headerDiscordId = request.headers.get('X-Discord-ID');
     if (headerDiscordId) {
         return headerDiscordId;
     }
@@ -105,27 +105,4 @@ export function extractDiscordId(request: Request): string | null {
     }
     
     return null;
-}
-
-/**
- * Rate limiting helper (basic implementation)
- * In production, consider using Cloudflare Rate Limiting or Durable Objects
- */
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-
-export function checkRateLimit(identifier: string, maxRequests: number = 100, windowMs: number = 60000): boolean {
-    const now = Date.now();
-    const record = rateLimitMap.get(identifier);
-    
-    if (!record || now > record.resetTime) {
-        rateLimitMap.set(identifier, { count: 1, resetTime: now + windowMs });
-        return true;
-    }
-    
-    if (record.count >= maxRequests) {
-        return false;
-    }
-    
-    record.count++;
-    return true;
 }
