@@ -8,10 +8,14 @@
 		"start": "wrangler dev",
 		"test": "vitest",
 		"cf-typegen": "wrangler types",
-		"db:create": "wrangler d1 execute enlacevrc-db --file=./db/schema.sql",
-		"db:populate": "wrangler d1 execute enlacevrc-db --file=./db/poblate.sql",
-		"db:clear": "wrangler d1 execute enlacevrc-db --file=./db/clear_tables.sql",
-		"db:test": "wrangler d1 execute enlacevrc-db --file=./db/test.sql",
+		"db:clear:local": "wrangler d1 execute enlacevrc-db --file=./db/clear_tables.sql",
+		"db:clear:prod": "wrangler d1 execute enlacevrc-db --file=./db/clear_tables.sql --remote",
+		"db:create:local": "wrangler d1 execute enlacevrc-db --file=./db/schema.sql",
+		"db:create:prod": "wrangler d1 execute enlacevrc-db --file=./db/schema.sql --remote",
+		"db:populate:local": "wrangler d1 execute enlacevrc-db --file=./db/poblate.sql",
+		"db:populate:prod": "wrangler d1 execute enlacevrc-db --file=./db/poblate.sql --remote",
+		"db:test:local": "wrangler d1 execute enlacevrc-db --file=./db/test.sql",
+		"db:test:prod": "wrangler d1 execute enlacevrc-db --file=./db/test.sql --remote",
 		"generate-pk": "node src/generate-key.js"
 	},
 	"devDependencies": {
