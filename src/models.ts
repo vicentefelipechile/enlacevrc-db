@@ -135,11 +135,13 @@ export interface Profile {
     vrchat_name: string;
     added_at: Date;
     updated_at: Date;
+    created_by: string;
+    updated_by?: string;
 
     is_banned: boolean | number;
     banned_at?: Date;
     banned_reason?: number;
-    banned_by?: string;
+    banned_by?: `stf_${string}`;
 
     is_verified: boolean | number;
     verification_method: number;

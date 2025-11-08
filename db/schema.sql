@@ -152,6 +152,8 @@ CREATE TABLE IF NOT EXISTS profiles (
     vrchat_name     TEXT NOT NULL,
     added_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by      TEXT NOT NULL,
+    updated_by      TEXT,
 
     is_banned       BOOLEAN NOT NULL DEFAULT FALSE,
     banned_at       TIMESTAMP NULL,

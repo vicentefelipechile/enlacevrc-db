@@ -55,7 +55,7 @@ INSERT INTO ban_reason (reason_text) VALUES
 INSERT INTO verification_type (type_name, description) VALUES
     ('Discord Staff', 'Verification through Discord Staff status'),
     ('VRChat Plus', 'Verification by gifting VRChat Plus membership to the bot'),
-    ('Manual Insertion', 'Manual insertion by the development');
+    ('Manual Insertion', 'Manual insertion by the developer or staff member');
 
 INSERT INTO log (log_level_id, log_message) VALUES
     (2, 'Added predefined ban reasons to ban_reason table');
