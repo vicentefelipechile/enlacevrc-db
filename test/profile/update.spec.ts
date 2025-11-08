@@ -8,6 +8,16 @@ import { env } from 'cloudflare:test';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UpdateProfile } from '../../src/profile/update';
 
+// Mock LogIt function
+vi.mock('../../src/loglevel', () => ({
+  LogIt: vi.fn(),
+  LogLevel: {
+    INFO: 3,
+    WARNING: 4,
+    ERROR: 5,
+  }
+}));
+
 // =================================================================================================
 // Mock Setup
 // =================================================================================================
@@ -27,12 +37,38 @@ const localEnv = { ...env, DB: mockDb as any };
 
 describe('UpdateProfile Handler', () => {
   const profileId = 'usr_123';
+  const staffUserId = 'stf_123e4567-e89b-12d3-a456-426614174000';
+  const nonStaffUserId = 'usr_123e4567-e89b-12d3-a456-426614174000';
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should update a profile name successfully', async () => {
+  it('should return 400 for unsupported field updates', async () => {
+    const updateData = { vrchat_name: 'New Name' }; // This field update is not supported
+    const request = new Request(`http://example.com/profiles/${profileId}`, {
+        method: 'PUT',
+        body: JSON.stringify(updateData),
+        headers: { 'Content-Type': 'application/json' },
+    });
+
+    const existingProfile = { 
+      profile_id: 'prf_123e4567-e89b-12d3-a456-426614174000',
+      vrchat_id: profileId,
+      discord_id: 'discord_456',
+      vrchat_name: 'Old Name'
+    };
+
+    mockDb.first.mockResolvedValue(existingProfile);
+
+    const response = await UpdateProfile(request, profileId, localEnv, staffUserId);
+    const responseBody = await response.json() as any;
+
+    expect(response.status).toBe(400);
+    expect(responseBody).toEqual({ success: false, error: 'No valid fields provided to update' });
+  });
+
+  it('should return 403 for non-staff users', async () => {
     const updateData = { vrchat_name: 'New Name' };
     const request = new Request(`http://example.com/profiles/${profileId}`, {
         method: 'PUT',
@@ -40,56 +76,73 @@ describe('UpdateProfile Handler', () => {
         headers: { 'Content-Type': 'application/json' },
     });
 
-    mockDb.first.mockResolvedValue({ vrchat_id: profileId });
-    mockDb.run.mockResolvedValue({ success: true });
-
-    const response = await UpdateProfile(request, profileId, localEnv);
+    const response = await UpdateProfile(request, profileId, localEnv, nonStaffUserId);
     const responseBody = await response.json() as any;
 
-    expect(response.status).toBe(200);
-    expect(responseBody).toEqual({ success: true, message: 'Profile updated successfully' });
-    expect(mockDb.prepare).toHaveBeenCalledWith(`UPDATE profiles SET vrchat_name = ?, updated_at = CURRENT_TIMESTAMP WHERE vrchat_id = ?`);
-    expect(mockDb.bind).toHaveBeenNthCalledWith(2, updateData.vrchat_name, profileId);
+    expect(response.status).toBe(403);
+    expect(responseBody).toEqual({ success: false, error: 'Only staff members can update profiles' });
   });
 
-  it('should update verification status successfully', async () => {
-    const updateData = { is_verified: true };
+  it('should ban a profile successfully', async () => {
+    const updateData = { is_banned: true, banned_reason: 1 };
     const request = new Request(`http://example.com/profiles/${profileId}`, {
         method: 'PUT',
         body: JSON.stringify(updateData),
         headers: { 'Content-Type': 'application/json' },
     });
 
-    mockDb.first.mockResolvedValue({ vrchat_id: profileId });
+    const existingProfile = { 
+      profile_id: 'prf_123e4567-e89b-12d3-a456-426614174000',
+      vrchat_id: profileId 
+    };
+
+    mockDb.first
+      .mockResolvedValueOnce(existingProfile) // Profile exists
+      .mockResolvedValueOnce({ ban_reason_id: 1 }); // Ban reason exists
     mockDb.run.mockResolvedValue({ success: true });
 
-    const response = await UpdateProfile(request, profileId, localEnv);
+    const response = await UpdateProfile(request, profileId, localEnv, staffUserId);
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
-    expect(responseBody).toEqual({ success: true, message: 'Profile updated successfully' });
-    expect(mockDb.prepare).toHaveBeenCalledWith(`UPDATE profiles SET is_verified = ?, verified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE vrchat_id = ?`);
-    expect(mockDb.bind).toHaveBeenNthCalledWith(2, 1, profileId);
+    expect(responseBody).toEqual({ success: true, message: 'Profile banned successfully' });
   });
 
-  it('should update ban status successfully', async () => {
-    const updateData = { is_banned: true };
+  it('should return 400 when banning without reason', async () => {
+    const updateData = { is_banned: true }; // Missing banned_reason
     const request = new Request(`http://example.com/profiles/${profileId}`, {
         method: 'PUT',
         body: JSON.stringify(updateData),
         headers: { 'Content-Type': 'application/json' },
     });
 
-    mockDb.first.mockResolvedValue({ vrchat_id: profileId });
-    mockDb.run.mockResolvedValue({ success: true });
+    const existingProfile = { 
+      profile_id: 'prf_123e4567-e89b-12d3-a456-426614174000',
+      vrchat_id: profileId 
+    };
 
-    const response = await UpdateProfile(request, profileId, localEnv);
+    mockDb.first.mockResolvedValue(existingProfile);
+
+    const response = await UpdateProfile(request, profileId, localEnv, staffUserId);
     const responseBody = await response.json() as any;
 
-    expect(response.status).toBe(200);
-    expect(responseBody).toEqual({ success: true, message: 'Profile updated successfully' });
-    expect(mockDb.prepare).toHaveBeenCalledWith(`UPDATE profiles SET is_banned = ?, banned_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE vrchat_id = ?`);
-    expect(mockDb.bind).toHaveBeenNthCalledWith(2, 1, profileId);
+    expect(response.status).toBe(400);
+    expect(responseBody).toEqual({ success: false, error: 'Banned reason is required when banning a profile' });
+  });
+
+  it('should return 400 when trying to ban and verify at the same time', async () => {
+    const updateData = { is_banned: true, is_verified: true, banned_reason: 1 };
+    const request = new Request(`http://example.com/profiles/${profileId}`, {
+        method: 'PUT',
+        body: JSON.stringify(updateData),
+        headers: { 'Content-Type': 'application/json' },
+    });
+
+    const response = await UpdateProfile(request, profileId, localEnv, staffUserId);
+    const responseBody = await response.json() as any;
+
+    expect(response.status).toBe(400);
+    expect(responseBody).toEqual({ success: false, error: 'Cannot ban and verify a profile at the same time. Choose one action.' });
   });
 
   it('should return 400 if no fields are provided for update', async () => {
@@ -99,7 +152,7 @@ describe('UpdateProfile Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await UpdateProfile(request, profileId, localEnv);
+    const response = await UpdateProfile(request, profileId, localEnv, staffUserId);
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
@@ -107,7 +160,7 @@ describe('UpdateProfile Handler', () => {
   });
 
   it('should return 404 if the profile to update does not exist', async () => {
-    const updateData = { vrchat_name: 'New Name' };
+    const updateData = { is_banned: true, banned_reason: 1 };
     const request = new Request(`http://example.com/profiles/${profileId}`, {
       method: 'PUT',
       body: JSON.stringify(updateData),
@@ -116,29 +169,36 @@ describe('UpdateProfile Handler', () => {
 
     mockDb.first.mockResolvedValue(null);
 
-    const response = await UpdateProfile(request, profileId, localEnv);
+    const response = await UpdateProfile(request, profileId, localEnv, staffUserId);
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(404);
     expect(responseBody).toEqual({ success: false, error: 'Profile not found' });
   });
 
-  it('should return 500 on database update failure', async () => {
-    const updateData = { vrchat_name: 'New Name' };
+  it('should return 409 on database ban operation failure', async () => {
+    const updateData = { is_banned: true, banned_reason: 1 };
     const request = new Request(`http://example.com/profiles/${profileId}`, {
       method: 'PUT',
       body: JSON.stringify(updateData),
       headers: { 'Content-Type': 'application/json' }
     });
 
-    mockDb.first.mockResolvedValue({ vrchat_id: profileId });
-    mockDb.run.mockResolvedValue({ success: false });
+    const existingProfile = { 
+      profile_id: 'prf_123e4567-e89b-12d3-a456-426614174000',
+      vrchat_id: profileId 
+    };
 
-    const response = await UpdateProfile(request, profileId, localEnv);
+    mockDb.first
+      .mockResolvedValueOnce(existingProfile) // Profile exists
+      .mockResolvedValueOnce({ ban_reason_id: 1 }); // Ban reason exists
+    mockDb.run.mockResolvedValue({ success: false }); // Database operation fails
+
+    const response = await UpdateProfile(request, profileId, localEnv, staffUserId);
     const responseBody = await response.json() as any;
 
-    expect(response.status).toBe(500);
-    expect(responseBody).toEqual({ success: false, error: 'Failed to update profile' });
+    expect(response.status).toBe(409);
+    expect(responseBody).toEqual({ success: false, error: 'Failed to ban profile' });
   });
 
   it('should return 400 for invalid JSON', async () => {
@@ -148,7 +208,7 @@ describe('UpdateProfile Handler', () => {
       headers: { 'Content-Type': 'application/json' }
     });
 
-    const response = await UpdateProfile(request, profileId, localEnv);
+    const response = await UpdateProfile(request, profileId, localEnv, staffUserId);
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
@@ -156,7 +216,7 @@ describe('UpdateProfile Handler', () => {
   });
 
   it('should return 500 for unexpected errors', async () => {
-    const updateData = { vrchat_name: 'New Name' };
+    const updateData = { is_banned: true, banned_reason: 1 };
     const request = new Request(`http://example.com/profiles/${profileId}`, {
       method: 'PUT',
       body: JSON.stringify(updateData),
@@ -165,7 +225,7 @@ describe('UpdateProfile Handler', () => {
 
     mockDb.first.mockRejectedValue(new Error('Database connection failed'));
 
-    const response = await UpdateProfile(request, profileId, localEnv);
+    const response = await UpdateProfile(request, profileId, localEnv, staffUserId);
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(500);
