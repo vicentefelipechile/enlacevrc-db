@@ -19,7 +19,7 @@ describe('Router and Authentication', () => {
     const request = new IncomingRequest('http://example.com/profiles', {
       headers: { Authorization: 'Bearer incorrect-key' },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -32,7 +32,7 @@ describe('Router and Authentication', () => {
     const request = new IncomingRequest('http://example.com/profiles/test-id', {
       headers: { Authorization: 'Bearer correct-key' },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -48,7 +48,7 @@ describe('Router and Authentication', () => {
           'X-User-ID': 'test-user-id'
         },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -65,7 +65,7 @@ describe('Router and Authentication', () => {
         'X-User-ID': 'test-user-id'
       },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -82,7 +82,7 @@ describe('Router and Authentication', () => {
         'X-User-ID': 'test-user-id'
       },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -99,7 +99,7 @@ describe('Router and Authentication', () => {
         'X-User-ID': 'test-user-id'
       },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -116,7 +116,7 @@ describe('Router and Authentication', () => {
         'X-User-ID': 'test-user-id'
       },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -134,7 +134,7 @@ describe('Router and Authentication', () => {
         'X-User-ID': 'test-user-id'
       },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -151,7 +151,7 @@ describe('Router and Authentication', () => {
         'X-User-ID': 'test-user-id'
       },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -168,7 +168,7 @@ describe('Router and Authentication', () => {
         'X-User-ID': 'test-user-id'
       },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -185,7 +185,7 @@ describe('Router and Authentication', () => {
         'X-User-ID': 'test-user-id'
       },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -202,7 +202,7 @@ describe('Router and Authentication', () => {
         'X-User-ID': 'test-user-id'
       },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -220,7 +220,7 @@ describe('Router and Authentication', () => {
         'X-User-ID': 'test-user-id'
       },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -237,7 +237,7 @@ describe('Router and Authentication', () => {
         'X-User-ID': 'test-user-id'
       },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -255,7 +255,7 @@ describe('Router and Authentication', () => {
         'X-User-ID': 'test-user-id'
       },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -278,7 +278,7 @@ describe('Router and Authentication', () => {
       },
       body: JSON.stringify({ setting_key: 'test', setting_value: 'value' })
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -297,7 +297,7 @@ describe('Router and Authentication', () => {
       },
       body: JSON.stringify({ setting_key: 'test', setting_value: 'value' })
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -313,7 +313,7 @@ describe('Router and Authentication', () => {
         'X-User-ID': 'test-user-id'
       },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -331,7 +331,7 @@ describe('Router and Authentication', () => {
         'X-User-ID': 'test-user-id'
       },
     });
-    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);

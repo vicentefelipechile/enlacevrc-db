@@ -30,12 +30,11 @@ export async function ValidateAdminAccess(request: Request, env: Env): Promise<R
             return ErrorResponse('Unauthorized: Invalid or missing API key', 401);
         }
 
-        // Extract Discord ID from request
-        const url = new URL(request.url);
-        const discordId = url.searchParams.get('discord_id');
+        // Extract Discord ID from request headers
+        const discordId = request.headers.get('x-discord-id');
 
         if (!discordId) {
-            return ErrorResponse('Missing required field: discord_id', 400);
+            return ErrorResponse('Missing header: x-discord-id', 400);
         }
 
         // Validate admin status

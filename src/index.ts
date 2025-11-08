@@ -31,6 +31,41 @@ import { ValidateAdminAccess } from './logs/validate-admin';
 // =================================================================================================
 
 /**
+ * @description Adds CORS headers to a response
+ * @param {Response} response The response to add headers to
+ * @returns {Response} Response with CORS headers
+ */
+function AddCorsHeaders(response: Response): Response {
+    const headers = new Headers(response.headers);
+    headers.set('Access-Control-Allow-Origin', '*');
+    headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key, x-discord-id, X-User-ID');
+    headers.set('Access-Control-Max-Age', '86400');
+    
+    return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+    });
+}
+
+/**
+ * @description Handles OPTIONS preflight requests
+ * @returns {Response} CORS preflight response
+ */
+function HandlePreflight(): Response {
+    return new Response(null, {
+        status: 204,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, x-discord-id, X-User-ID',
+            'Access-Control-Max-Age': '86400',
+        },
+    });
+}
+
+/**
  * @description Authenticates the incoming request by checking the Authorization header.
  * @param {Request} request The incoming Request object.
  * @param {Env} env The Cloudflare Worker environment object.
@@ -38,7 +73,7 @@ import { ValidateAdminAccess } from './logs/validate-admin';
  */
 function HandleAuthentication(request: Request, env: Env): Response | null {
     const authHeader = request.headers.get('Authorization');
-    const expectedAuth = `Bearer ${env.PRIVATE_KEY}`;
+    const expectedAuth = `Bearer ${env.API_KEY}`;
 
     if (!authHeader || authHeader !== expectedAuth) {
         return ErrorResponse('Unauthorized', 401);
@@ -51,16 +86,26 @@ function HandleAuthentication(request: Request, env: Env): Response | null {
  * @description Routes the request to the appropriate handler based on the method and URL.
  * @param {Request} request The incoming Request object.
  * @param {Env} env The Cloudflare Worker environment object.
+ * @param {boolean} requiresAuth Whether the request requires authentication
  * @returns {Promise<Response>} The Response from the executed handler.
  */
 async function RouteRequest(request: Request, env: Env): Promise<Response> {
+    const { pathname } = new URL(request.url);
+    const pathParts = pathname.split('/').filter(p => p);
+
+    // Public endpoints that don't require X-User-ID or full authentication
+    if (pathParts[0] === 'auth' && pathParts[1] === 'validate-admin') {
+        if (request.method === 'GET') {
+            return ValidateAdminAccess(request, env);
+        }
+        return ErrorResponse(`Method ${request.method} not allowed`, 405);
+    }
+
+    // All other endpoints require X-User-ID
     const userId = request.headers.get('X-User-ID');
     if (!userId) {
         return ErrorResponse('X-User-ID header is required', 400);
     }
-
-    const { pathname } = new URL(request.url);
-    const pathParts = pathname.split('/').filter(p => p); // e.g., /profiles/usr_123 -> ['profiles', 'usr_123']
 
     if (pathParts[0] === 'profiles') {
         const profileId = pathParts.length > 1 ? pathParts[1] : undefined;
@@ -146,14 +191,6 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
         }
     }
 
-    // Admin validation endpoint
-    if (pathParts[0] === 'auth' && pathParts[1] === 'validate-admin') {
-        if (request.method === 'GET') {
-            return ValidateAdminAccess(request, env);
-        }
-        return ErrorResponse(`Method ${request.method} not allowed`, 405);
-    }
-
     return ErrorResponse('Not Found', 404);
 }
 
@@ -170,13 +207,29 @@ export default {
      * @returns {Promise<Response>} The response to the request.
      */
     async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-        // Step 1: Authenticate the request
-        const authError = HandleAuthentication(request, env);
-        if (authError) {
-            return authError;
+        // Handle CORS preflight requests
+        if (request.method === 'OPTIONS') {
+            return HandlePreflight();
+        }
+
+        const { pathname } = new URL(request.url);
+        const pathParts = pathname.split('/').filter(p => p);
+        
+        // Public endpoints that bypass API_KEY authentication
+        const isPublicEndpoint = pathParts[0] === 'auth' && pathParts[1] === 'validate-admin';
+
+        // Step 1: Authenticate the request (skip for public endpoints)
+        if (!isPublicEndpoint) {
+            const authError = HandleAuthentication(request, env);
+            if (authError) {
+                return AddCorsHeaders(authError);
+            }
         }
 
         // Step 2: Route the request to the correct handler
-        return RouteRequest(request, env);
+        const response = await RouteRequest(request, env);
+        
+        // Step 3: Add CORS headers to the response
+        return AddCorsHeaders(response);
     },
 } satisfies ExportedHandler<Env>;

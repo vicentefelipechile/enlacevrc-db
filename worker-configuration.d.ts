@@ -6,7 +6,6 @@ declare namespace Cloudflare {
 		mainModule: typeof import("./src/index");
 	}
 	interface Env {
-		PRIVATE_KEY: string;
 		API_KEY: string;
 		DB: D1Database;
 	}

@@ -8,6 +8,7 @@
 import { ErrorResponse, JsonResponse } from '../responses';
 import { requireAuth } from '../middleware/auth';
 import type { Log } from '../models';
+import { LogIt, LogLevel } from '../loglevel';
 
 // =============================================================================
 // GetLogs Function
@@ -38,11 +39,8 @@ export async function GetLogs(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
         const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
         const logLevelId = url.searchParams.get('log_level_id');
-        const actionType = url.searchParams.get('action_type');
-        const targetUserId = url.searchParams.get('target_user_id');
-        const performedBy = url.searchParams.get('performed_by');
-        const startDate = url.searchParams.get('start_date');
-        const endDate = url.searchParams.get('end_date');
+        const createdBy = url.searchParams.get('created_by');
+        const createdAt = url.searchParams.get('created_at');
 
         // Build query with filters
         let query = 'SELECT * FROM log WHERE 1=1';
@@ -53,29 +51,14 @@ export async function GetLogs(request: Request, env: Env): Promise<Response> {
             params.push(parseInt(logLevelId));
         }
 
-        if (actionType) {
-            query += ' AND action_type = ?';
-            params.push(actionType);
+        if (createdBy) {
+            query += ' AND created_by = ?';
+            params.push(createdBy);
         }
 
-        if (targetUserId) {
-            query += ' AND target_user_id = ?';
-            params.push(targetUserId);
-        }
-
-        if (performedBy) {
-            query += ' AND performed_by = ?';
-            params.push(performedBy);
-        }
-
-        if (startDate) {
-            query += ' AND created_at >= ?';
-            params.push(startDate);
-        }
-
-        if (endDate) {
-            query += ' AND created_at <= ?';
-            params.push(endDate);
+        if (createdAt) {
+            query += ' AND created_at = ?';
+            params.push(createdAt);
         }
 
         query += ' ORDER BY created_at DESC LIMIT ?';
@@ -113,17 +96,8 @@ export async function GetLogs(request: Request, env: Env): Promise<Response> {
  */
 async function logAccess(env: Env, performedBy: string, actionType: string, message: string): Promise<void> {
     try {
-        const statement = env.DB.prepare(`
-            INSERT INTO log (log_level_id, action_type, log_message, performed_by)
-            VALUES (?, ?, ?, ?)
-        `).bind(
-            2, // INFO level
-            actionType,
-            message,
-            performedBy
-        );
-
-        await statement.run();
+        const logMessage = `[${actionType}] ${message} - By: ${performedBy}`;
+        await LogIt(env.DB, LogLevel.INFO, logMessage);
     } catch (error) {
         console.error('Failed to log access:', error);
         // Don't throw - logging failure shouldn't break the main function
