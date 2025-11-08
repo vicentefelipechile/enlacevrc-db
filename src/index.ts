@@ -52,6 +52,11 @@ function HandleAuthentication(request: Request, env: Env): Response | null {
  * @returns {Promise<Response>} The Response from the executed handler.
  */
 async function RouteRequest(request: Request, env: Env): Promise<Response> {
+    const userId = request.headers.get('X-User-ID');
+    if (!userId) {
+        return ErrorResponse('X-User-ID header is required', 400);
+    }
+
     const { pathname } = new URL(request.url);
     const pathParts = pathname.split('/').filter(p => p); // e.g., /profiles/usr_123 -> ['profiles', 'usr_123']
 
@@ -60,16 +65,16 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
         switch (request.method) {
             case 'POST':
                 if (profileId) return ErrorResponse('POST requests cannot include an ID in the URL', 400);
-                return AddProfile(request, env);
+                return AddProfile(request, env, userId);
             case 'GET':
                 if (!profileId) return ErrorResponse('A profile ID is required for GET requests (e.g., /profiles/some_id)', 400);
-                return GetProfile(profileId, env);
+                return GetProfile(profileId, env, userId);
             case 'PUT':
                 if (!profileId) return ErrorResponse('A profile ID is required for PUT requests (e.g., /profiles/some_id)', 400);
-                return UpdateProfile(request, profileId, env);
+                return UpdateProfile(request, profileId, env, userId);
             case 'DELETE':
                 if (!profileId) return ErrorResponse('A profile ID is required for DELETE requests (e.g., /profiles/some_id)', 400);
-                return DeleteProfile(profileId, env);
+                return DeleteProfile(profileId, env, userId);
             default:
                 return ErrorResponse(`Method ${request.method} not allowed`, 405);
         }
