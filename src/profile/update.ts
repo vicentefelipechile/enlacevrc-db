@@ -10,6 +10,7 @@
 
 import { Profile } from '../models';
 import { ErrorResponse, SuccessResponse } from '../responses';
+import { LogIt, LogLevel } from '../loglevel';
 
 // =================================================================================================
 // UpdateProfile Function
@@ -20,9 +21,10 @@ import { ErrorResponse, SuccessResponse } from '../responses';
  * @param {Request} request The incoming Request object.
  * @param {string} profileId The ID of the profile to update (can be vrchat_id or discord_id).
  * @param {Env} env The Cloudflare Worker environment object.
+ * @param {string} userId The ID of the user performing the action.
  * @returns {Promise<Response>} A Response object confirming success or detailing an error.
  */
-export async function UpdateProfile(request: Request, profileId: string, env: Env): Promise<Response> {
+export async function UpdateProfile(request: Request, profileId: string, env: Env, userId: string): Promise<Response> {
     try {
         // Data extraction
         const dataProfileUpdate: Partial<Profile> = await request.json();
@@ -30,6 +32,16 @@ export async function UpdateProfile(request: Request, profileId: string, env: En
         // Basic validation
         if (!dataProfileUpdate || Object.keys(dataProfileUpdate).length === 0) {
             return ErrorResponse('No fields provided to update', 400);
+        }
+
+        // Staff validation
+        if (!userId.startsWith('stf_')) {
+            return ErrorResponse('Only staff members can update profiles', 403);
+        }
+
+        // Validation: Admin cannot ban and verify at the same time
+        if (dataProfileUpdate.is_banned !== undefined && dataProfileUpdate.is_verified !== undefined) {
+            return ErrorResponse('Cannot ban and verify a profile at the same time. Choose one action.', 400);
         }
 
         let profile;
@@ -43,117 +55,180 @@ export async function UpdateProfile(request: Request, profileId: string, env: En
         }
 
         if (!profile) {
+            await LogIt(env.DB, LogLevel.WARNING, `Profile with ID '${profileId}' not found for update by user ${userId}`);
             return ErrorResponse('Profile not found', 404);
         }
 
-        // Variable extraction
-        const {
-            vrchat_name: vrchatName,
-            discord_id: discordId,
-            is_verified: isVerified,
-            is_banned: isBanned,
-            banned_reason: bannedReason,
-            banned_by: bannedBy,
-            verified_from: verifiedFrom,
-            verified_by: verifiedBy
-        } = dataProfileUpdate;
-
-        // Validate foreign keys if provided
-        if (bannedReason !== undefined) {
-            const banReasonCheck = await env.DB.prepare('SELECT 1 FROM ban_reason WHERE ban_reason_id = ?').bind(bannedReason).first();
-            if (!banReasonCheck) return ErrorResponse('Invalid banned_reason: ban reason does not exist', 400);
-        }
-        if (bannedBy !== undefined) {
-            const staffCheck = await env.DB.prepare('SELECT 1 FROM staff WHERE staff_id = ?').bind(bannedBy).first();
-            if (!staffCheck) return ErrorResponse('Invalid banned_by: staff member does not exist', 400);
-        }
-        if (verifiedFrom !== undefined) {
-            const serverCheck = await env.DB.prepare('SELECT 1 FROM discord_server WHERE server_id = ?').bind(verifiedFrom).first();
-            if (!serverCheck) return ErrorResponse('Invalid verified_from: discord server does not exist', 400);
-        }
-        if (verifiedBy !== undefined) {
-            const staffCheck = await env.DB.prepare('SELECT 1 FROM staff WHERE staff_id = ?').bind(verifiedBy).first();
-            if (!staffCheck) return ErrorResponse('Invalid verified_by: staff member does not exist', 400);
-        }
-
-        const { vrchat_id: vrchatId } = profile;
-
-        // Statement construction
-        const fields: string[] = [];
-        const values: (string | number | null)[] = [];
-
-        if (vrchatName !== undefined) {
-            fields.push('vrchat_name = ?');
-            values.push(vrchatName);
-        }
-
-        if (discordId !== undefined) {
-            fields.push('discord_id = ?');
-            values.push(discordId);
-        }
-
-        if (isVerified !== undefined) {
-            fields.push('is_verified = ?');
-            values.push(isVerified ? 1 : 0);
-
-            if (isVerified) {
-                fields.push('verified_at = CURRENT_TIMESTAMP');
-            } else {
-                fields.push('verified_at = NULL');
-            }
-        }
-
-        if (isBanned !== undefined) {
-            fields.push('is_banned = ?');
-            values.push(isBanned ? 1 : 0);
-
+        // Handle banning logic
+        const isChangingBanning = dataProfileUpdate.is_banned !== undefined;
+        if (isChangingBanning) {
+            const {
+                is_banned: isBanned,
+                banned_reason: bannedReason
+            } = dataProfileUpdate;
+            
             if (isBanned) {
-                fields.push('banned_at = CURRENT_TIMESTAMP');
+                // Banning the user
+                if (!bannedReason) {
+                    return ErrorResponse('Banned reason is required when banning a profile', 400);
+                }
+
+                // Verify that the ban reason exists
+                const banReasonCheck = env.DB.prepare('SELECT ban_reason_id FROM ban_reason WHERE ban_reason_id = ? AND is_disabled = FALSE');
+                const banReasonExists = await banReasonCheck.bind(bannedReason).first();
+                
+                if (!banReasonExists) {
+                    return ErrorResponse('Invalid ban reason provided', 400);
+                }
+
+                const updateStatement = env.DB.prepare(`
+                    UPDATE
+                        profiles 
+                    SET
+                        is_banned = TRUE, 
+                        banned_at = CURRENT_TIMESTAMP, 
+                        banned_reason = ?, 
+                        banned_by = ?, 
+                        updated_at = CURRENT_TIMESTAMP,
+                        updated_by = ?
+                    WHERE
+                        profile_id = ?
+                `);
+                
+                const result = await updateStatement.bind(bannedReason, userId, userId, profile.profile_id).run();
+                
+                if (!result.success) {
+                    await LogIt(env.DB, LogLevel.ERROR, `Failed to ban profile ${profile.profile_id} by user ${userId}`);
+                    return ErrorResponse('Failed to ban profile', 409);
+                }
+
+                await LogIt(env.DB, LogLevel.INFO, `Profile ${profile.profile_id} (VRChat: ${profile.vrchat_id}, Discord: ${profile.discord_id}) banned by ${userId} with reason ${bannedReason}`);
+                return SuccessResponse('Profile banned successfully', 200);
             } else {
-                fields.push('banned_at = NULL');
+                // Unbanning the user
+                const updateStatement = env.DB.prepare(`
+                    UPDATE profiles 
+                    SET is_banned = FALSE, 
+                        banned_at = NULL, 
+                        banned_reason = NULL, 
+                        banned_by = NULL, 
+                        updated_at = CURRENT_TIMESTAMP,
+                        updated_by = ?
+                    WHERE profile_id = ?
+                `);
+                
+                const result = await updateStatement.bind(userId, profile.profile_id).run();
+                
+                if (!result.success) {
+                    await LogIt(env.DB, LogLevel.ERROR, `Failed to unban profile ${profile.profile_id} by user ${userId}`);
+                    return ErrorResponse('Failed to unban profile', 409);
+                }
+
+                await LogIt(env.DB, LogLevel.INFO, `Profile ${profile.profile_id} (VRChat: ${profile.vrchat_id}, Discord: ${profile.discord_id}) unbanned by ${userId}`);
+                return SuccessResponse('Profile unbanned successfully', 200);
             }
         }
 
-        if (bannedReason !== undefined) {
-            fields.push('banned_reason = ?');
-            values.push(bannedReason);
+        // Handle verification logic
+        const isChangingVerification = dataProfileUpdate.is_verified !== undefined;
+        if (isChangingVerification) {
+            const { 
+                is_verified: isVerified, 
+                verification_method: verificationMethod, 
+                verified_from: verifiedFrom 
+            } = dataProfileUpdate;
+            
+            if (isVerified) {
+                // Verifying the user
+                if (!verificationMethod) {
+                    return ErrorResponse('Verification method is required when verifying a profile', 400);
+                }
+
+                // Verify that the verification type exists
+                const verificationTypeCheck = env.DB.prepare('SELECT verification_type_id FROM verification_type WHERE verification_type_id = ? AND is_disabled = FALSE');
+                const verificationTypeExists = await verificationTypeCheck.bind(verificationMethod).first();
+                
+                if (!verificationTypeExists) {
+                    return ErrorResponse('Invalid verification method provided', 400);
+                }
+
+                // If verified_from is provided, validate it exists in discord_server table
+                if (verifiedFrom) {
+                    const serverCheck = env.DB.prepare('SELECT server_id FROM discord_server WHERE server_id = ?');
+                    const serverExists = await serverCheck.bind(verifiedFrom).first();
+                    
+                    if (!serverExists) {
+                        return ErrorResponse('Invalid Discord server ID provided', 400);
+                    }
+                } else {
+                    return ErrorResponse('verified_from is required when verifying a profile', 400);
+                }
+
+                const updateStatement = env.DB.prepare(`
+                    UPDATE
+                        profiles 
+                    SET
+                        is_verified = TRUE, 
+                        verification_method = ?, 
+                        verified_at = CURRENT_TIMESTAMP, 
+                        verified_from = ?, 
+                        verified_by = ?, 
+                        updated_at = CURRENT_TIMESTAMP,
+                        updated_by = ?
+                    WHERE
+                        profile_id = ?
+                `);
+                
+                const result = await updateStatement.bind(
+                    verificationMethod,
+                    verifiedFrom,
+                    userId,
+                    userId,
+                    profile.profile_id
+                ).run();
+
+                if (!result.success) {
+                    await LogIt(env.DB, LogLevel.ERROR, `Failed to verify profile ${profile.profile_id} by user ${userId}`);
+                    return ErrorResponse('Failed to verify profile', 409);
+                }
+
+                await LogIt(env.DB, LogLevel.INFO, `Profile ${profile.profile_id} (VRChat: ${profile.vrchat_id}, Discord: ${profile.discord_id}) verified by ${userId} using method ${verificationMethod}`);
+                return SuccessResponse('Profile verified successfully', 200);
+            } else {
+                // Unverifying the user
+                const updateStatement = env.DB.prepare(`
+                    UPDATE
+                        profiles
+                    SET
+                        is_verified = FALSE,
+                        verification_method = NULL,
+                        verified_at = NULL,
+                        verified_from = NULL,
+                        verified_by = NULL,
+                        updated_at = CURRENT_TIMESTAMP,
+                        updated_by = ?
+                    WHERE
+                        profile_id = ?
+                `);
+                
+                const result = await updateStatement.bind(userId, profile.profile_id).run();
+                
+                if (!result.success) {
+                    await LogIt(env.DB, LogLevel.ERROR, `Failed to unverify profile ${profile.profile_id} by user ${userId}`);
+                    return ErrorResponse('Failed to unverify profile', 409);
+                }
+
+                await LogIt(env.DB, LogLevel.INFO, `Profile ${profile.profile_id} (VRChat: ${profile.vrchat_id}, Discord: ${profile.discord_id}) unverified by ${userId}`);
+                return SuccessResponse('Profile unverified successfully', 200);
+            }
         }
-
-        if (bannedBy !== undefined) {
-            fields.push('banned_by = ?');
-            values.push(bannedBy);
-        }
-
-        if (verifiedFrom !== undefined) {
-            fields.push('verified_from = ?');
-            values.push(verifiedFrom);
-        }
-
-        if (verifiedBy !== undefined) {
-            fields.push('verified_by = ?');
-            values.push(verifiedBy);
-        }
-
-        fields.push('updated_at = CURRENT_TIMESTAMP');
-        values.push(vrchatId);
-
-        // Statement preparation and execution
-        const statement = `UPDATE profiles SET ${fields.join(', ')} WHERE vrchat_id = ?`;
-        const { success } = await env.DB.prepare(statement).bind(...values).run();
-
-        // Database result handling
-        if (success) {
-            // Log the action
-            const logStmt = env.DB.prepare('INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)');
-            await logStmt.bind(1, `Profile updated: ${vrchatId}`, 'system').run();
-
-            return SuccessResponse('Profile updated successfully');
-        } else {
-            return ErrorResponse('Failed to update profile', 500);
-        }
+    
+        // If some how we reach here without returning, I simply don't know what to do
+        return ErrorResponse('No valid fields provided to update', 400);
     } catch (e: unknown) {
         const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred';
         console.error(`Error updating profile: ${errorMessage}`);
+        await LogIt(env.DB, LogLevel.ERROR, `Error updating profile by ${userId}: ${errorMessage}`);
 
         if (errorMessage.includes('JSON')) {
             return ErrorResponse('Invalid JSON in request body', 400);
