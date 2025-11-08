@@ -41,15 +41,18 @@ describe('GetDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    mockDb.first.mockResolvedValue(mockSetting);
+    // Mock server lookup first, then setting lookup
+    mockDb.first
+      .mockResolvedValueOnce({ server_id: 'srv_internal_123' }) // Discord server exists
+      .mockResolvedValueOnce(mockSetting); // Setting exists
 
     const response = await GetDiscordSetting(request, discordServerId, localEnv);
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
     expect(responseBody).toEqual({ success: true, data: { [settingKey]: mockSetting.setting_value } });
-    expect(mockDb.prepare).toHaveBeenCalledWith('SELECT setting_value FROM discord_settings WHERE discord_server_id = ? AND setting_key = ?');
-    expect(mockDb.bind).toHaveBeenCalledWith(discordServerId, settingKey);
+    expect(mockDb.prepare).toHaveBeenCalledWith('SELECT server_id FROM discord_server WHERE discord_server_id = ?');
+    expect(mockDb.bind).toHaveBeenCalledWith(discordServerId);
   });
 
   it('should return 404 if setting is not found', async () => {
@@ -60,7 +63,10 @@ describe('GetDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    mockDb.first.mockResolvedValue(null);
+    // Mock server exists, but setting doesn't
+    mockDb.first
+      .mockResolvedValueOnce({ server_id: 'srv_internal_999' }) // Discord server exists
+      .mockResolvedValueOnce(null); // Setting doesn't exist
 
     const response = await GetDiscordSetting(request, discordServerId, localEnv);
     const responseBody = await response.json() as any;
@@ -75,6 +81,9 @@ describe('GetDiscordSetting Handler', () => {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
+
+    // Mock server exists
+    mockDb.first.mockResolvedValueOnce({ server_id: 'srv_internal_123' });
 
     const response = await GetDiscordSetting(request, discordServerId, localEnv);
     const responseBody = await response.json() as any;
@@ -100,6 +109,8 @@ describe('GetDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
+    // Mock server lookup first, then all settings
+    mockDb.first.mockResolvedValueOnce({ server_id: 'srv_internal_123' });
     mockDb.all.mockResolvedValue({ success: true, results: mockSettings });
 
     const response = await GetDiscordSetting(request, discordServerId, localEnv);
@@ -113,7 +124,7 @@ describe('GetDiscordSetting Handler', () => {
         'welcome_channel': '123456789'
       }
     });
-    expect(mockDb.prepare).toHaveBeenCalledWith('SELECT setting_key, setting_value FROM discord_settings WHERE discord_server_id = ?');
+    expect(mockDb.prepare).toHaveBeenCalledWith('SELECT server_id FROM discord_server WHERE discord_server_id = ?');
     expect(mockDb.bind).toHaveBeenCalledWith(discordServerId);
   });
 
@@ -124,6 +135,8 @@ describe('GetDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
+    // Mock server lookup first, then empty results
+    mockDb.first.mockResolvedValueOnce({ server_id: 'srv_internal_999' });
     mockDb.all.mockResolvedValue({ success: true, results: [] });
 
     const response = await GetDiscordSetting(request, discordServerId, localEnv);
@@ -140,6 +153,8 @@ describe('GetDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
+    // Mock server lookup first, then failed operation
+    mockDb.first.mockResolvedValueOnce({ server_id: 'srv_internal_999' });
     mockDb.all.mockResolvedValue({ success: false, results: [] });
 
     const response = await GetDiscordSetting(request, discordServerId, localEnv);
@@ -194,7 +209,10 @@ describe('GetDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    mockDb.first.mockResolvedValue(mockSetting);
+    // Mock server lookup first, then setting lookup
+    mockDb.first
+      .mockResolvedValueOnce({ server_id: 'srv_internal_123' })
+      .mockResolvedValueOnce(mockSetting);
 
     const response = await GetDiscordSetting(request, discordServerId, localEnv);
     const responseBody = await response.json() as any;
@@ -237,14 +255,17 @@ describe('GetDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    mockDb.first.mockResolvedValue(mockSetting);
+    // Mock server lookup first, then setting lookup
+    mockDb.first
+      .mockResolvedValueOnce({ server_id: 'srv_internal_123' })
+      .mockResolvedValueOnce(mockSetting);
 
     const response = await GetDiscordSetting(request, discordServerId, localEnv);
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(200);
     expect(responseBody).toEqual({ success: true, data: { 'welcome message': 'Hello World!' } });
-    expect(mockDb.bind).toHaveBeenCalledWith(discordServerId, 'welcome message');
+    expect(mockDb.bind).toHaveBeenCalledWith('srv_internal_123', 'welcome message');
   });
 
   it('should handle case where getallsettings parameter has different values', async () => {

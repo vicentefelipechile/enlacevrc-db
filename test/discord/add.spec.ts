@@ -46,9 +46,11 @@ describe('AddDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
+    // Mock server exists check and setting validation
     mockDb.first.mockResolvedValueOnce({ server_id: 'srv_123e4567-e89b-12d3-a456-426614174000' }) // Server exists
-                  .mockResolvedValueOnce({ '1': 1 }); // Setting exists
-    mockDb.run.mockResolvedValue({ success: true });
+                  .mockResolvedValueOnce({ '1': 1 }); // Setting exists in settings table
+    mockDb.run.mockResolvedValueOnce({ success: true }) // Insert setting succeeds
+             .mockResolvedValueOnce({ success: true }); // Log insert succeeds
 
     const response = await AddDiscordSetting(request, discordServerId, localEnv);
     const responseBody = await response.json() as any;
@@ -100,9 +102,10 @@ describe('AddDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    mockDb.first.mockResolvedValueOnce({ '1': 1 }) // Server exists
-                  .mockResolvedValueOnce({ '1': 1 }); // Setting exists
-    mockDb.run.mockResolvedValue({ success: false });
+    // Mock server exists check and setting validation
+    mockDb.first.mockResolvedValueOnce({ server_id: 'srv_123e4567-e89b-12d3-a456-426614174000' }) // Server exists
+                  .mockResolvedValueOnce({ '1': 1 }); // Setting exists in settings table
+    mockDb.run.mockResolvedValue({ success: false }); // Insert fails
 
     const response = await AddDiscordSetting(request, discordServerId, localEnv);
     const responseBody = await response.json() as any;

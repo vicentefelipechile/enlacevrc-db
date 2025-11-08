@@ -31,7 +31,7 @@ describe('DeleteDiscordSetting Handler', () => {
     const requestData = { setting_key: 'prefix' };
     const existingSetting = { 
       id: 1, 
-      discord_server_id: 'server_123', 
+      discord_server_id: 'srv_internal_123', 
       setting_key: 'prefix', 
       setting_value: '!',
       created_at: new Date(),
@@ -44,8 +44,11 @@ describe('DeleteDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    mockDb.first.mockResolvedValue(existingSetting);
-    mockDb.run.mockResolvedValue({ success: true });
+    // Mock server lookup first, then setting lookup
+    mockDb.first.mockResolvedValueOnce({ server_id: 'srv_internal_123' }) // Server lookup
+                  .mockResolvedValueOnce(existingSetting); // Setting exists
+    mockDb.run.mockResolvedValueOnce({ success: true }) // Delete succeeds
+             .mockResolvedValueOnce({ success: true }); // Log insert succeeds
 
     const response = await DeleteDiscordSetting(request, discordServerId, localEnv);
     const responseBody = await response.json() as any;
@@ -53,7 +56,7 @@ describe('DeleteDiscordSetting Handler', () => {
     expect(response.status).toBe(200);
     expect(responseBody).toEqual({ success: true, message: 'Discord setting deleted' });
     expect(mockDb.prepare).toHaveBeenCalledWith('SELECT * FROM discord_settings WHERE discord_server_id = ? AND setting_key = ?');
-    expect(mockDb.bind).toHaveBeenCalledWith(discordServerId, requestData.setting_key);
+    expect(mockDb.bind).toHaveBeenCalledWith('srv_internal_123', requestData.setting_key);
   });
 
   it('should return 404 if the setting does not exist', async () => {
@@ -66,7 +69,9 @@ describe('DeleteDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    mockDb.first.mockResolvedValue(null);
+    // Mock server lookup first, then setting lookup that returns null
+    mockDb.first.mockResolvedValueOnce({ server_id: 'srv_internal_999' }) // Server exists
+                  .mockResolvedValueOnce(null); // Setting doesn't exist
 
     const response = await DeleteDiscordSetting(request, discordServerId, localEnv);
     const responseBody = await response.json() as any;
@@ -97,7 +102,7 @@ describe('DeleteDiscordSetting Handler', () => {
     const requestData = { setting_key: 'prefix' };
     const existingSetting = { 
       id: 1, 
-      discord_server_id: 'server_123', 
+      discord_server_id: 'srv_internal_123', 
       setting_key: 'prefix', 
       setting_value: '!'
     };
@@ -108,8 +113,10 @@ describe('DeleteDiscordSetting Handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    mockDb.first.mockResolvedValue(existingSetting);
-    mockDb.run.mockResolvedValue({ success: false });
+    // Mock server lookup first, setting exists, but delete fails
+    mockDb.first.mockResolvedValueOnce({ server_id: 'srv_internal_123' }) // Server exists
+                  .mockResolvedValueOnce(existingSetting); // Setting exists
+    mockDb.run.mockResolvedValue({ success: false }); // Delete fails
 
     const response = await DeleteDiscordSetting(request, discordServerId, localEnv);
     const responseBody = await response.json() as any;

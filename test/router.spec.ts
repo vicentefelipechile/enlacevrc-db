@@ -28,9 +28,25 @@ describe('Router and Authentication', () => {
     expect(responseBody).toEqual({ success: false, error: 'Unauthorized' });
   });
 
+  it('should return 400 if X-User-ID header is missing', async () => {
+    const request = new IncomingRequest('http://example.com/profiles/test-id', {
+      headers: { Authorization: 'Bearer correct-key' },
+    });
+    const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    const responseBody = await response.json() as any;
+    expect(response.status).toBe(400);
+    expect(responseBody).toEqual({ success: false, error: 'X-User-ID header is required' });
+  });
+
   it('should return 404 Not Found for routes not starting with /profiles or /discord-settings', async () => {
     const request = new IncomingRequest('http://example.com/not-profiles', {
-        headers: { Authorization: 'Bearer correct-key' },
+        headers: { 
+          Authorization: 'Bearer correct-key',
+          'X-User-ID': 'test-user-id'
+        },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
     const ctx = createExecutionContext();
@@ -44,7 +60,10 @@ describe('Router and Authentication', () => {
   it('should return 400 for POST requests with an ID', async () => {
     const request = new IncomingRequest('http://example.com/profiles/some-id', {
       method: 'POST',
-      headers: { Authorization: 'Bearer correct-key' },
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
     const ctx = createExecutionContext();
@@ -58,7 +77,10 @@ describe('Router and Authentication', () => {
   it('should return 400 for GET requests without an ID', async () => {
     const request = new IncomingRequest('http://example.com/profiles', {
       method: 'GET',
-      headers: { Authorization: 'Bearer correct-key' },
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
     const ctx = createExecutionContext();
@@ -72,7 +94,10 @@ describe('Router and Authentication', () => {
   it('should return 400 for PUT requests without an ID', async () => {
     const request = new IncomingRequest('http://example.com/profiles', {
       method: 'PUT',
-      headers: { Authorization: 'Bearer correct-key' },
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
     const ctx = createExecutionContext();
@@ -86,7 +111,10 @@ describe('Router and Authentication', () => {
   it('should return 405 for disallowed methods', async () => {
     const request = new IncomingRequest('http://example.com/profiles', {
       method: 'HEAD',
-      headers: { Authorization: 'Bearer correct-key' },
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
     const ctx = createExecutionContext();
@@ -101,7 +129,10 @@ describe('Router and Authentication', () => {
   it('should return 400 for POST requests to /discord-settings without server ID', async () => {
     const request = new IncomingRequest('http://example.com/discord-settings', {
       method: 'POST',
-      headers: { Authorization: 'Bearer correct-key' },
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
     const ctx = createExecutionContext();
@@ -115,7 +146,10 @@ describe('Router and Authentication', () => {
   it('should return 400 for GET requests to /discord-settings without server ID', async () => {
     const request = new IncomingRequest('http://example.com/discord-settings', {
       method: 'GET',
-      headers: { Authorization: 'Bearer correct-key' },
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
     const ctx = createExecutionContext();
@@ -129,7 +163,10 @@ describe('Router and Authentication', () => {
   it('should return 400 for PUT requests to /discord-settings without server ID', async () => {
     const request = new IncomingRequest('http://example.com/discord-settings', {
       method: 'PUT',
-      headers: { Authorization: 'Bearer correct-key' },
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
     const ctx = createExecutionContext();
@@ -143,7 +180,10 @@ describe('Router and Authentication', () => {
   it('should return 400 for DELETE requests to /discord-settings without server ID', async () => {
     const request = new IncomingRequest('http://example.com/discord-settings', {
       method: 'DELETE',
-      headers: { Authorization: 'Bearer correct-key' },
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
     const ctx = createExecutionContext();
@@ -157,7 +197,10 @@ describe('Router and Authentication', () => {
   it('should return 405 for disallowed methods on /discord-settings', async () => {
     const request = new IncomingRequest('http://example.com/discord-settings/server_123', {
       method: 'PATCH',
-      headers: { Authorization: 'Bearer correct-key' },
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
     const ctx = createExecutionContext();
@@ -172,7 +215,10 @@ describe('Router and Authentication', () => {
   it('should return 400 for GET requests to /discord-settings without server ID', async () => {
     const request = new IncomingRequest('http://example.com/discord-settings', {
       method: 'GET',
-      headers: { Authorization: 'Bearer correct-key' },
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
     const ctx = createExecutionContext();
@@ -186,7 +232,10 @@ describe('Router and Authentication', () => {
   it('should return 404 for unknown actions on /discord-settings', async () => {
     const request = new IncomingRequest('http://example.com/discord-settings/server_123/unknown-action', {
       method: 'GET',
-      headers: { Authorization: 'Bearer correct-key' },
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
     const ctx = createExecutionContext();
@@ -202,7 +251,8 @@ describe('Router and Authentication', () => {
       method: 'GET',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-User-ID': 'test-user-id'
       },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
@@ -223,7 +273,8 @@ describe('Router and Authentication', () => {
       method: 'POST',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-User-ID': 'test-user-id'
       },
       body: JSON.stringify({ setting_key: 'test', setting_value: 'value' })
     });
@@ -241,7 +292,8 @@ describe('Router and Authentication', () => {
       method: 'PUT',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-User-ID': 'test-user-id'
       },
       body: JSON.stringify({ setting_key: 'test', setting_value: 'value' })
     });
@@ -256,7 +308,10 @@ describe('Router and Authentication', () => {
   it('should handle DELETE method on /discord-settings/:id/exists (should fail - processes as normal DELETE)', async () => {
     const request = new IncomingRequest('http://example.com/discord-settings/server_123/exists', {
       method: 'DELETE',
-      headers: { Authorization: 'Bearer correct-key' },
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };
     const ctx = createExecutionContext();
@@ -272,7 +327,8 @@ describe('Router and Authentication', () => {
       method: 'GET',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-User-ID': 'test-user-id'
       },
     });
     const localEnv = { ...env, PRIVATE_KEY: 'correct-key' };

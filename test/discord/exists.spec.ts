@@ -39,7 +39,7 @@ describe('DiscordServerExists Handler', () => {
 
     expect(response.status).toBe(200);
     expect(responseBody).toEqual({ success: true, data: { exists: true } });
-    expect(mockDb.prepare).toHaveBeenCalledWith('SELECT 1 FROM discord_server WHERE server_id = ? LIMIT 1');
+    expect(mockDb.prepare).toHaveBeenCalledWith('SELECT 1 FROM discord_server WHERE discord_server_id = ? LIMIT 1');
     expect(mockDb.bind).toHaveBeenCalledWith(discordServerId);
   });
 
@@ -53,7 +53,7 @@ describe('DiscordServerExists Handler', () => {
 
     expect(response.status).toBe(200);
     expect(responseBody).toEqual({ success: true, data: { exists: false } });
-    expect(mockDb.prepare).toHaveBeenCalledWith('SELECT 1 FROM discord_server WHERE server_id = ? LIMIT 1');
+    expect(mockDb.prepare).toHaveBeenCalledWith('SELECT 1 FROM discord_server WHERE discord_server_id = ? LIMIT 1');
     expect(mockDb.bind).toHaveBeenCalledWith(discordServerId);
   });
 
