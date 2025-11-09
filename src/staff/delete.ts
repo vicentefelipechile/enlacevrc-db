@@ -8,6 +8,7 @@
 // Import Statements
 // =================================================================================================
 
+import { LogIt, LogLevel } from '../loglevel';
 import { Staff } from '../models';
 import { ErrorResponse, SuccessResponse } from '../responses';
 
@@ -19,9 +20,10 @@ import { ErrorResponse, SuccessResponse } from '../responses';
  * @description Deletes a staff member from the database using the provided Discord ID.
  * @param {string} staffId The Discord ID of the staff member to delete.
  * @param {Env} env The Cloudflare Worker environment object.
+ * @param {Request} request The incoming Request object.
  * @returns {Promise<Response>} A response indicating the result of the deletion operation.
  */
-export async function DeleteStaff(staffId: string, env: Env): Promise<Response> {
+export async function DeleteStaff(staffId: string, env: Env, request: Request): Promise<Response> {
     try {
         // Check if staff member exists
         const checkStatement = env.DB.prepare('SELECT * FROM staff WHERE discord_id = ?');
@@ -39,8 +41,8 @@ export async function DeleteStaff(staffId: string, env: Env): Promise<Response> 
         // Database result handling
         if (success) {
             // Log the action
-            const logStmt = env.DB.prepare('INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)');
-            await logStmt.bind(1, `Staff member deleted: ${staffId}`, 'system').run();
+            const userName = request.headers.get('X-Discord-Name')!;
+            await LogIt(env.DB, LogLevel.CHANGE, `Staff member deleted: ${staffId}`, userName);
 
             return SuccessResponse('Staff member deleted successfully');
         } else {

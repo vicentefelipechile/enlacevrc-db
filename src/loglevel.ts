@@ -16,12 +16,18 @@ export enum LogLevel {
     DEBUG = 2,
     /** Informational messages about general application flow. */
     INFO = 3,
+    /** Messages related to additions or changes in the database. */
+    ADDITION = 4,
+    /** Messages related to changes in the database. */
+    CHANGE = 5,
+    /** Messages related to removals from the database. */
+    REMOVAL = 6,
     /** Warning messages indicating potential issues that do not stop execution. */
-    WARNING = 4,
+    WARNING = 7,
     /** Error messages for failures that affect functionality. */
-    ERROR = 5,
+    ERROR = 8,
     /** Critical messages for severe errors requiring immediate attention. */
-    CRITICAL = 6
+    CRITICAL = 9
 }
 
 /**
@@ -34,7 +40,11 @@ export enum LogLevel {
 
 const SQL_INSERT_LOG = 'INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)';
 
-export async function LogIt(db: D1Database, level: LogLevel, message: string, createdBy?: string | 'system'): Promise<void> {
+export async function LogIt(db: D1Database, level: LogLevel, message: string, createdBy?: string): Promise<void> {
+    if (!createdBy) {
+        createdBy = 'system';
+    }
+
     await db
         .prepare(SQL_INSERT_LOG)
         .bind(level, message, createdBy)

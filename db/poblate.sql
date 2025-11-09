@@ -12,6 +12,9 @@ INSERT INTO log_level (level_name, description) VALUES
     ('SYSTEM', 'System-level messages'),
     ('DEBUG', 'Detailed information for diagnosing issues'),
     ('INFO', 'General operational messages'),
+    ('ADDITION', 'Records of additions to the database'),
+    ('CHANGE', 'Records of changes in the database'),
+    ('REMOVAL', 'Records of deletions from the database'),
     ('WARNING', 'Indications of potential issues'),
     ('ERROR', 'Error events that might still allow the application to continue running'),
     ('CRITICAL', 'Severe error events that will presumably lead the application to abort');
@@ -69,6 +72,9 @@ INSERT INTO staff (staff_id, discord_id, discord_name, added_by) VALUES
 
 INSERT INTO log (log_level_id, log_message) VALUES
     (2, 'Added initial bot admin and staff member');
+
+INSERT INTO discord_server (server_id, discord_server_id, server_name, added_by) VALUES
+    ('srv_123e4567-e89b-12d3-a456-426614174002', 'web', 'Admin Web Panel', 'adm_123e4567-e89b-12d3-a456-426614174000');
 
 INSERT INTO log (log_level_id, log_message) VALUES
     (1, 'Database population script completed successfully');

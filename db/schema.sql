@@ -105,11 +105,11 @@ CREATE TABLE IF NOT EXISTS log (
 */
 
 CREATE TABLE IF NOT EXISTS discord_server (
-    server_id          TEXT PRIMARY KEY,
-    discord_server_id TEXT NOT NULL UNIQUE,
-    server_name        TEXT NOT NULL,
-    added_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    added_by           TEXT NOT NULL
+    server_id           TEXT PRIMARY KEY,
+    discord_server_id   TEXT NOT NULL UNIQUE,
+    server_name         TEXT NOT NULL,
+    added_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    added_by            TEXT NOT NULL
 );
 
 

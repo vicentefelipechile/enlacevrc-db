@@ -70,12 +70,12 @@ export async function ListStaff(request: Request, env: Env, userId: string): Pro
         const result = await statement.bind(...params).all<Staff>();
 
         // Log the access
-        await LogIt(env.DB, LogLevel.INFO, `Staff list accessed by user ${userId} with filters: limit=${limitParam}, start_date=${startDateParam}, end_date=${endDateParam}, created_by=${createdByParam}`);
+        const userName = request.headers.get('X-Discord-Name')!;
+        await LogIt(env.DB, LogLevel.INFO, `Staff list accessed by user ${userName} (${userId}) with filters: limit=${limitParam}, start_date=${startDateParam}, end_date=${endDateParam}, created_by=${createdByParam}`, userName);
 
         return JsonResponse({
             success: true,
             data: result.results || [],
-            count: result.results?.length || 0,
         });
     } catch (e: unknown) {
         const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred';

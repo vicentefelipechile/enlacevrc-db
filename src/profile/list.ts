@@ -33,7 +33,17 @@ export async function ListProfiles(request: Request, env: Env, userId: string): 
         const createdByParam = url.searchParams.get('created_by');
 
         // Build dynamic query
-        let query = 'SELECT * FROM profiles WHERE 1=1';
+        let query = `
+            SELECT
+                prof.*,
+                staff.discord_name AS verified_by
+            FROM
+                profiles as prof
+            LEFT JOIN
+                staff ON prof.verified_by = staff.staff_id
+            WHERE
+                1=1
+        `;
         const params: (string | number)[] = [];
 
         // Add filters based on query parameters
@@ -79,7 +89,7 @@ export async function ListProfiles(request: Request, env: Env, userId: string): 
 
         // Log the access
         const userName = request.headers.get('X-Discord-Name')!;
-        await LogIt(env.DB, LogLevel.INFO, `Profiles list accessed by admin ${userName} (${userId}) with filters: limit=${limitParam}, start_date=${startDateParam}, end_date=${endDateParam}, created_by=${createdByParam}`);
+        await LogIt(env.DB, LogLevel.INFO, `Profiles list accessed by admin ${userName} (${userId}) with filters: limit=${limitParam}, start_date=${startDateParam}, end_date=${endDateParam}, created_by=${createdByParam}`, userName);
 
         return JsonResponse({
             success: true,

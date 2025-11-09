@@ -8,6 +8,7 @@
 // Import Statements
 // =================================================================================================
 
+import { LogIt, LogLevel } from '../loglevel';
 import { Staff } from '../models';
 import { ErrorResponse, SuccessResponse } from '../responses';
 
@@ -52,8 +53,8 @@ export async function AddStaff(request: Request, env: Env): Promise<Response> {
         // Database result handling
         if (success) {
             // Log the action
-            const logStmt = env.DB.prepare('INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)');
-            await logStmt.bind(1, `Staff member added: ${discordId}`, 'system').run();
+            const userName = request.headers.get('X-Discord-Name')!;
+            await LogIt(env.DB, LogLevel.ADDITION, `New staff member added: ${discordId} by ${addedBy}`, userName);
 
             return SuccessResponse('Staff member added successfully', 201);
         } else {
