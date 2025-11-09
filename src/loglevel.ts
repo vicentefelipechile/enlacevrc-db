@@ -32,11 +32,11 @@ export enum LogLevel {
  * @returns A promise that resolves when the log entry is inserted.
  */
 
-const SQL_INSERT_LOG = 'INSERT INTO log (log_level_id, log_message) VALUES (?, ?)';
+const SQL_INSERT_LOG = 'INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)';
 
-export async function LogIt(db: D1Database, level: LogLevel, message: string): Promise<void> {
+export async function LogIt(db: D1Database, level: LogLevel, message: string, createdBy?: string | 'system'): Promise<void> {
     await db
         .prepare(SQL_INSERT_LOG)
-        .bind(level, message)
+        .bind(level, message, createdBy)
         .run();
 }

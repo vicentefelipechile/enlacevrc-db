@@ -76,7 +76,6 @@ export async function GetLogs(request: Request, env: Env): Promise<Response> {
         // Log this access for audit purposes
         const discordId = request.headers.get('X-Discord-ID')!;
         const discordName = request.headers.get('X-Discord-Name')!;
-        await logAccess(env, discordId, 'LOG_ACCESS', `Accessed logs with filters: ${JSON.stringify(Object.fromEntries(url.searchParams))}`);
         await LogIt(env.DB, LogLevel.INFO, `Logs retrieved by admin ${discordName} (${discordId})`);
 
         return JsonResponse({
@@ -90,18 +89,5 @@ export async function GetLogs(request: Request, env: Env): Promise<Response> {
         const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
         console.error('Error in GetLogs:', errorMessage);
         return ErrorResponse('Internal Server Error', 500);
-    }
-}
-
-/**
- * Helper function to log access to sensitive endpoints
- */
-async function logAccess(env: Env, performedBy: string, actionType: string, message: string): Promise<void> {
-    try {
-        const logMessage = `[${actionType}] ${message} - By: ${performedBy}`;
-        await LogIt(env.DB, LogLevel.INFO, logMessage);
-    } catch (error) {
-        console.error('Failed to log access:', error);
-        // Don't throw - logging failure shouldn't break the main function
     }
 }
