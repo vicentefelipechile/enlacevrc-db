@@ -78,12 +78,12 @@ export async function ListProfiles(request: Request, env: Env, userId: string): 
         }
 
         // Log the access
-        await LogIt(env.DB, LogLevel.INFO, `Profiles list accessed by admin ${userId} with filters: limit=${limitParam}, start_date=${startDateParam}, end_date=${endDateParam}, created_by=${createdByParam}`);
+        const userName = request.headers.get('X-Discord-Name')!;
+        await LogIt(env.DB, LogLevel.INFO, `Profiles list accessed by admin ${userName} (${userId}) with filters: limit=${limitParam}, start_date=${startDateParam}, end_date=${endDateParam}, created_by=${createdByParam}`);
 
         return JsonResponse({
             success: true,
             data: result.results || [],
-            count: result.results?.length || 0,
         });
     } catch (e: unknown) {
         const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred';

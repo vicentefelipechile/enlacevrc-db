@@ -42,7 +42,7 @@ function AddCorsHeaders(response: Response): Response {
     const headers = new Headers(response.headers);
     headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Api-Key, X-Discord-ID, X-User-ID');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Api-Key, X-Discord-ID, X-Discord-Name, X-User-ID');
     headers.set('Access-Control-Max-Age', '86400');
     
     return new Response(response.body, {
@@ -63,6 +63,7 @@ function HandlePreflight(): Response {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Discord-ID, X-Discord-Name, X-User-ID',
+            'Access-Control-Expose-Headers': 'Content-Type, Authorization, X-Api-Key, X-Discord-ID, X-Discord-Name, X-User-ID',
             'Access-Control-Max-Age': '86400',
         },
     });
