@@ -53,7 +53,7 @@ describe('AddProfile Handler', () => {
       vrchat_id: 'usr_123', 
       discord_id: 'discord_456', 
       vrchat_name: 'Test User',
-      verification_method: 1
+      verification_id: 1
     };
     const request = new Request('http://example.com/profiles', {
       method: 'POST',
@@ -70,14 +70,14 @@ describe('AddProfile Handler', () => {
     expect(responseBody).toEqual({ success: true, message: 'Profile created successfully' });
     expect(mockDb.prepare).toHaveBeenCalledWith(`
             INSERT INTO profiles (
-                profile_id, vrchat_id, discord_id, vrchat_name, verification_method, created_by
+                profile_id, vrchat_id, discord_id, vrchat_name, verification_id, created_by
             ) VALUES (?, ?, ?, ?, ?, ?)
         `);
-    expect(mockDb.bind).toHaveBeenCalledWith('prf_123e4567-e89b-12d3-a456-426614174000', newProfile.vrchat_id, newProfile.discord_id, newProfile.vrchat_name, newProfile.verification_method, mockUserId);
+    expect(mockDb.bind).toHaveBeenCalledWith('prf_123e4567-e89b-12d3-a456-426614174000', newProfile.vrchat_id, newProfile.discord_id, newProfile.vrchat_name, newProfile.verification_id, mockUserId);
   });
 
   it('should return 400 for missing required fields', async () => {
-    const newProfile = { vrchat_id: 'usr_123', vrchat_name: 'Test User' }; // Missing discord_id and verification_method
+    const newProfile = { vrchat_id: 'usr_123', vrchat_name: 'Test User' }; // Missing discord_id and verification_id
     const request = new Request('http://example.com/profiles', {
       method: 'POST',
       body: JSON.stringify(newProfile),
@@ -88,7 +88,7 @@ describe('AddProfile Handler', () => {
     const responseBody = await response.json() as any;
 
     expect(response.status).toBe(400);
-    expect(responseBody).toEqual({ success: false, error: 'Missing required fields: vrchat_id, discord_id, vrchat_name, and verification_method are required' });
+    expect(responseBody).toEqual({ success: false, error: 'Missing required fields: vrchat_id, discord_id, vrchat_name, and verification_id are required' });
   });
 
   it('should return 400 for invalid JSON', async () => {
@@ -110,7 +110,7 @@ describe('AddProfile Handler', () => {
       vrchat_id: 'usr_123', 
       discord_id: 'discord_456', 
       vrchat_name: 'Test User',
-      verification_method: 1
+      verification_id: 1
     };
     const request = new Request('http://example.com/profiles', {
       method: 'POST',
@@ -132,7 +132,7 @@ describe('AddProfile Handler', () => {
       vrchat_id: 'usr_123', 
       discord_id: 'discord_456', 
       vrchat_name: 'Test User', 
-      verification_method: 1
+      verification_id: 1
     };
     const request = new Request('http://example.com/profiles', {
       method: 'POST',

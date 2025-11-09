@@ -53,7 +53,7 @@ describe('GetProfile Handler', () => {
       banned_reason: null,
       banned_by: null,
       is_verified: 1,
-      verification_method: 1,
+      verification_id: 1,
       verified_at: testDate,
       verified_from: null,
       verified_by: null
@@ -92,7 +92,7 @@ describe('GetProfile Handler', () => {
       banned_reason: null,
       banned_by: null,
       is_verified: 1,
-      verification_method: 1,
+      verification_id: 1,
       verified_at: new Date(),
       verified_from: null,
       verified_by: null
@@ -123,7 +123,7 @@ describe('GetProfile Handler', () => {
       banned_reason: null,
       banned_by: null,
       is_verified: 0,
-      verification_method: 1,
+      verification_id: 1,
       verified_at: null,
       verified_from: null,
       verified_by: null

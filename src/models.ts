@@ -144,7 +144,7 @@ export interface Profile {
     banned_by?: `stf_${string}`;
 
     is_verified: boolean | number;
-    verification_method: number;
+    verification_id: number;
     verified_at?: Date;
     verified_from?: string;
     verified_by?: `stf_${string}`;

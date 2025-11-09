@@ -16,6 +16,8 @@
 		"db:populate:prod": "wrangler d1 execute enlacevrc-db --file=./db/poblate.sql --remote",
 		"db:test:local": "wrangler d1 execute enlacevrc-db --file=./db/test.sql",
 		"db:test:prod": "wrangler d1 execute enlacevrc-db --file=./db/test.sql --remote",
+		"db:reload:local": "npm run db:clear:local && npm run db:create:local && npm run db:populate:local",
+		"db:reload:prod": "npm run db:clear:prod && npm run db:create:prod && npm run db:populate:prod",
 		"generate-pk": "node src/generate-key.js"
 	},
 	"devDependencies": {

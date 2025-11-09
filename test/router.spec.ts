@@ -340,4 +340,231 @@ describe('Router and Authentication', () => {
     const responseBody = await response.json() as any;
     expect(responseBody).toHaveProperty('success');
   });
+
+  // Staff Route Tests
+  it('should return 400 for POST requests to /staff with an ID', async () => {
+    const request = new IncomingRequest('http://example.com/staff/some-id', {
+      method: 'POST',
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
+    });
+    const localEnv = { ...env, API_KEY: 'correct-key' };
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    const responseBody = await response.json() as any;
+    expect(response.status).toBe(400);
+    expect(responseBody).toEqual({ success: false, error: 'POST requests cannot include an ID in the URL' });
+  });
+
+  it('should allow GET requests to /staff without ID', async () => {
+    const request = new IncomingRequest('http://example.com/staff', {
+      method: 'GET',
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
+    });
+    const localEnv = { ...env, API_KEY: 'correct-key' };
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    
+    expect([200, 404, 500]).toContain(response.status);
+    const responseBody = await response.json() as any;
+    expect(responseBody).toHaveProperty('success');
+  });
+
+  it('should return 400 for PUT requests to /staff without ID', async () => {
+    const request = new IncomingRequest('http://example.com/staff', {
+      method: 'PUT',
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
+    });
+    const localEnv = { ...env, API_KEY: 'correct-key' };
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    const responseBody = await response.json() as any;
+    expect(response.status).toBe(400);
+    expect(responseBody).toEqual({ success: false, error: 'A staff ID is required for PUT requests (e.g., /staff/some_id)' });
+  });
+
+  it('should return 400 for DELETE requests to /staff without ID', async () => {
+    const request = new IncomingRequest('http://example.com/staff', {
+      method: 'DELETE',
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
+    });
+    const localEnv = { ...env, API_KEY: 'correct-key' };
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    const responseBody = await response.json() as any;
+    expect(response.status).toBe(400);
+    expect(responseBody).toEqual({ success: false, error: 'A staff ID is required for DELETE requests (e.g., /staff/some_id)' });
+  });
+
+  it('should return 405 for disallowed methods on /staff', async () => {
+    const request = new IncomingRequest('http://example.com/staff/stf_123', {
+      method: 'PATCH',
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
+    });
+    const localEnv = { ...env, API_KEY: 'correct-key' };
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    const responseBody = await response.json() as any;
+    expect(response.status).toBe(405);
+    expect(responseBody).toEqual({ success: false, error: 'Method PATCH not allowed' });
+  });
+
+  // Logs Route Tests
+  it('should allow GET requests to /logs (admin only)', async () => {
+    const request = new IncomingRequest('http://example.com/logs', {
+      method: 'GET',
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
+    });
+    const localEnv = { ...env, API_KEY: 'correct-key' };
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    
+    // Response can be 401, 403, or 200 depending on admin status
+    expect([200, 401, 403, 500]).toContain(response.status);
+    const responseBody = await response.json() as any;
+    expect(responseBody).toHaveProperty('success');
+  });
+
+  it('should return 405 for POST requests to /logs', async () => {
+    const request = new IncomingRequest('http://example.com/logs', {
+      method: 'POST',
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
+    });
+    const localEnv = { ...env, API_KEY: 'correct-key' };
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    const responseBody = await response.json() as any;
+    expect(response.status).toBe(405);
+    expect(responseBody).toEqual({ success: false, error: 'Method POST not allowed' });
+  });
+
+  it('should return 405 for PUT requests to /logs', async () => {
+    const request = new IncomingRequest('http://example.com/logs', {
+      method: 'PUT',
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
+    });
+    const localEnv = { ...env, API_KEY: 'correct-key' };
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    const responseBody = await response.json() as any;
+    expect(response.status).toBe(405);
+    expect(responseBody).toEqual({ success: false, error: 'Method PUT not allowed' });
+  });
+
+  it('should return 405 for DELETE requests to /logs', async () => {
+    const request = new IncomingRequest('http://example.com/logs', {
+      method: 'DELETE',
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
+    });
+    const localEnv = { ...env, API_KEY: 'correct-key' };
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    const responseBody = await response.json() as any;
+    expect(response.status).toBe(405);
+    expect(responseBody).toEqual({ success: false, error: 'Method DELETE not allowed' });
+  });
+
+  // Auth Validate Admin Route Tests (Public Endpoint)
+  it('should allow GET requests to /auth/validate-admin without Authorization Bearer token', async () => {
+    const request = new IncomingRequest('http://example.com/auth/validate-admin', {
+      method: 'GET',
+      headers: { 
+        'X-Api-Key': 'test-api-key',
+        'X-Discord-ID': '12345'
+      },
+    });
+    const localEnv = { ...env, API_KEY: 'test-api-key' };
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    
+    // Should not require Authorization Bearer header, only X-Api-Key
+    expect([200, 400, 403, 500]).toContain(response.status);
+  });
+
+  it('should return 405 for POST requests to /auth/validate-admin', async () => {
+    const request = new IncomingRequest('http://example.com/auth/validate-admin', {
+      method: 'POST',
+      headers: { 
+        'X-Discord-ID': '12345'
+      },
+    });
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, env, ctx);
+    await waitOnExecutionContext(ctx);
+    const responseBody = await response.json() as any;
+    expect(response.status).toBe(405);
+    expect(responseBody).toEqual({ success: false, error: 'Method POST not allowed' });
+  });
+
+  it('should handle CORS preflight OPTIONS requests', async () => {
+    const request = new IncomingRequest('http://example.com/profiles', {
+      method: 'OPTIONS',
+    });
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, env, ctx);
+    await waitOnExecutionContext(ctx);
+    
+    expect(response.status).toBe(204);
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('GET');
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('POST');
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('PUT');
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('DELETE');
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('OPTIONS');
+  });
+
+  it('should add CORS headers to all responses', async () => {
+    const request = new IncomingRequest('http://example.com/profiles', {
+      method: 'GET',
+      headers: { 
+        Authorization: 'Bearer correct-key',
+        'X-User-ID': 'test-user-id'
+      },
+    });
+    const localEnv = { ...env, API_KEY: 'correct-key' };
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('GET');
+    expect(response.headers.get('Access-Control-Allow-Headers')).toContain('Content-Type');
+    expect(response.headers.get('Access-Control-Allow-Headers')).toContain('Authorization');
+  });
 });

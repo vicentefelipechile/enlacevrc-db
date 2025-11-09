@@ -14,15 +14,18 @@ import { UpdateProfile } from './profile/update';
 import { ErrorResponse } from './responses';
 import { AddProfile } from './profile/add';
 import { GetProfile } from './profile/get';
+import { ListProfiles } from './profile/list';
 import { AddDiscordSetting } from './discord/add';
 import { GetDiscordSetting } from './discord/get';
 import { UpdateDiscordSetting } from './discord/update';
 import { DeleteDiscordSetting } from './discord/delete';
 import { DiscordServerExists } from './discord/exists';
+import { ListDiscordSettings } from './discord/list';
 import { AddStaff } from './staff/add';
 import { GetStaff } from './staff/get';
 import { UpdateStaff } from './staff/update';
 import { DeleteStaff } from './staff/delete';
+import { ListStaff } from './staff/list';
 import { GetLogs } from './logs/get';
 import { ValidateAdminAccess } from './logs/validate-admin';
 
@@ -109,6 +112,12 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
 
     if (pathParts[0] === 'profiles') {
         const profileId = pathParts.length > 1 ? pathParts[1] : undefined;
+
+        // Handle /profiles/list
+        if (profileId === 'list' && request.method === 'GET') {
+            return ListProfiles(request, env, userId);
+        }
+
         switch (request.method) {
             case 'POST':
                 if (profileId) return ErrorResponse('POST requests cannot include an ID in the URL', 400);
@@ -130,6 +139,11 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
     if (pathParts[0] === 'discord-settings') {
         const discordServerId = pathParts.length > 1 ? pathParts[1] : undefined;
         const action = pathParts.length > 2 ? pathParts[2] : undefined;
+
+        // Handle /discord-settings/list
+        if (discordServerId === 'list' && request.method === 'GET') {
+            return ListDiscordSettings(request, env, userId);
+        }
 
         // Handle /discord-settings/:id/exists
         if (action === 'exists' && request.method === 'GET') {
@@ -162,6 +176,11 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
 
     if (pathParts[0] === 'staff') {
         const staffId = pathParts.length > 1 ? pathParts[1] : undefined;
+
+        // Handle /staff/list
+        if (staffId === 'list' && request.method === 'GET') {
+            return ListStaff(request, env, userId);
+        }
         
         switch (request.method) {
             case 'POST':

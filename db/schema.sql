@@ -161,14 +161,14 @@ CREATE TABLE IF NOT EXISTS profiles (
     banned_by       TEXT NULL,
 
     is_verified     BOOLEAN NOT NULL DEFAULT FALSE,
-    verification_method TEXT NOT NULL,
+    verification_id INTEGER NULL,
     verified_at     TIMESTAMP NULL,
     verified_from   TEXT NULL,
     verified_by     TEXT NULL,
 
     FOREIGN KEY(banned_reason) REFERENCES ban_reason(ban_reason_id),
     FOREIGN KEY(banned_by) REFERENCES staff(staff_id),
-    FOREIGN KEY(verification_method) REFERENCES verification_type(verification_type_id),
+    FOREIGN KEY(verification_id) REFERENCES verification_type(verification_type_id),
     FOREIGN KEY(verified_from) REFERENCES discord_server(server_id),
     FOREIGN KEY(verified_by) REFERENCES staff(staff_id)
 );

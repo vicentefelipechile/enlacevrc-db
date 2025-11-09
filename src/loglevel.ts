@@ -6,7 +6,7 @@
 
 /**
  * Enumeration representing different log levels for categorizing log messages by severity.
- * Lower numeric values indicate less severe levels, with higher values for more critical issues.
+ * These values must match the log_level_id from the log_level table in the database.
  * @enum {number}
  */
 export enum LogLevel {

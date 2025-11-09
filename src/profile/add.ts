@@ -29,8 +29,8 @@ export async function AddProfile(request: Request, env: Env, userId: string): Pr
         const newProfileData: Partial<Profile> = await request.json();
 
         // Basic validation
-        if (!newProfileData.vrchat_id || !newProfileData.discord_id || !newProfileData.vrchat_name || !newProfileData.verification_method) {
-            return ErrorResponse('Missing required fields: vrchat_id, discord_id, vrchat_name, and verification_method are required', 400);
+        if (!newProfileData.vrchat_id || !newProfileData.discord_id || !newProfileData.vrchat_name || !newProfileData.verification_id) {
+            return ErrorResponse('Missing required fields: vrchat_id, discord_id, vrchat_name, and verification_id are required', 400);
         }
 
         // Generate new profile ID
@@ -41,13 +41,13 @@ export async function AddProfile(request: Request, env: Env, userId: string): Pr
             vrchat_id: vrchatId,
             discord_id: discordId,
             vrchat_name: vrchatName,
-            verification_method: verificationMethod
+            verification_id: verificationMethod
         } = newProfileData;
 
         // Statement preparation and execution
         const statement = env.DB.prepare(`
             INSERT INTO profiles (
-                profile_id, vrchat_id, discord_id, vrchat_name, verification_method, created_by
+                profile_id, vrchat_id, discord_id, vrchat_name, verification_id, created_by
             ) VALUES (?, ?, ?, ?, ?, ?)
         `);
         const { success, meta } = await statement.bind(

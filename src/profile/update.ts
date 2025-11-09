@@ -134,7 +134,7 @@ export async function UpdateProfile(request: Request, profileId: string, env: En
         if (isChangingVerification) {
             const { 
                 is_verified: isVerified, 
-                verification_method: verificationMethod, 
+                verification_id: verificationMethod, 
                 verified_from: verifiedFrom 
             } = dataProfileUpdate;
             
@@ -169,7 +169,7 @@ export async function UpdateProfile(request: Request, profileId: string, env: En
                         profiles 
                     SET
                         is_verified = TRUE, 
-                        verification_method = ?, 
+                        verification_id = ?, 
                         verified_at = CURRENT_TIMESTAMP, 
                         verified_from = ?, 
                         verified_by = ?, 
@@ -201,7 +201,7 @@ export async function UpdateProfile(request: Request, profileId: string, env: En
                         profiles
                     SET
                         is_verified = FALSE,
-                        verification_method = NULL,
+                        verification_id = NULL,
                         verified_at = NULL,
                         verified_from = NULL,
                         verified_by = NULL,

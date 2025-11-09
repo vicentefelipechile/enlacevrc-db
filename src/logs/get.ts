@@ -40,7 +40,10 @@ export async function GetLogs(request: Request, env: Env): Promise<Response> {
         const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
         const logLevelId = url.searchParams.get('log_level_id');
         const createdBy = url.searchParams.get('created_by');
-        const createdAt = url.searchParams.get('created_at');
+
+        // Date Range
+        const startDate = url.searchParams.get('start_date');
+        const endDate = url.searchParams.get('end_date');
 
         // Build query with filters
         let query = 'SELECT * FROM log WHERE 1=1';
@@ -56,9 +59,9 @@ export async function GetLogs(request: Request, env: Env): Promise<Response> {
             params.push(createdBy);
         }
 
-        if (createdAt) {
-            query += ' AND created_at = ?';
-            params.push(createdAt);
+        if (startDate && endDate) {
+            query += ' AND created_at BETWEEN ? AND ?';
+            params.push(startDate, endDate);
         }
 
         query += ' ORDER BY created_at DESC LIMIT ?';
@@ -76,7 +79,7 @@ export async function GetLogs(request: Request, env: Env): Promise<Response> {
         // Log this access for audit purposes
         const discordId = request.headers.get('X-Discord-ID')!;
         const discordName = request.headers.get('X-Discord-Name')!;
-        await LogIt(env.DB, LogLevel.INFO, `Logs retrieved by admin ${discordName} (${discordId})`);
+        await LogIt(env.DB, LogLevel.INFO, `Logs retrieved by admin ${discordName} (${discordId})`, discordName);
 
         return JsonResponse({
             success: true,
