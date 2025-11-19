@@ -10,19 +10,6 @@
 // =================================================================================================
 
 /**
- * @description Represents a ban reason in the database.
- * @interface BanReason
- */
-export interface BanReason {
-    ban_reason_id: number;
-    reason_text: string;
-    created_at: Date;
-    created_by: string;
-    updated_at: Date;
-    is_disabled: boolean;
-}
-
-/**
  * @description Represents a setting type in the database.
  * @interface SettingType
  */
@@ -140,7 +127,7 @@ export interface Profile {
 
     is_banned: boolean | number;
     banned_at?: Date;
-    banned_reason?: number;
+    banned_reason?: string;
     banned_by?: `stf_${string}`;
 
     is_verified: boolean | number;
@@ -155,7 +142,7 @@ export interface Profile {
  * @interface DiscordSetting
  */
 export interface DiscordSetting {
-    discord_setting_id: `dst_${string}`;
+    discord_setting_id: number;
     discord_server_id: string;
     setting_key: string;
     setting_value: string;

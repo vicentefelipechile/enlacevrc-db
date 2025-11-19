@@ -1,5 +1,5 @@
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import worker from '../../src/index';
 
 import poblate from '../../db/poblate.sql?raw';
@@ -8,7 +8,7 @@ import test from '../../db/test.sql?raw';
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
-describe('GET /discord/{server_id}/exists - ServerExists', () => {
+describe('POST /discord/{server_id}/new - NewSetting', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
     'X-User-ID': 'stf_test',
@@ -56,9 +56,9 @@ describe('GET /discord/{server_id}/exists - ServerExists', () => {
     await localEnv.DB.batch(statements);
   });
 
-  it('should return 405 for non-GET methods', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/exists', {
-      method: 'POST',
+  it('should return 405 for non-POST methods', async () => {
+    const request = new IncomingRequest('http://example.com/discord/123456789/new', {
+      method: 'GET',
       headers: validHeaders,
     });
     const ctx = createExecutionContext();
@@ -67,34 +67,57 @@ describe('GET /discord/{server_id}/exists - ServerExists', () => {
     
     expect(response.status).toBe(405);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: false, error: 'Method POST not allowed for /discord/123456789/exists' });
+    expect(body).toEqual({ success: false, error: 'Method GET not allowed for /discord/123456789/new' });
   });
 
-  it('should check if server exists', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/exists', {
-      method: 'GET',
+  it('should return 400 when missing required fields', async () => {
+    const request = new IncomingRequest('http://example.com/discord/123456789/new', {
+      method: 'POST',
       headers: validHeaders,
+      body: JSON.stringify({}),
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
     
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(400);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: true, data: { exists: true } });
+    expect(body).toEqual({ success: false, error: 'Missing required fields: setting_key and setting_value are required' });
   });
 
-  it('should return false for non-existent server', async () => {
-    const request = new IncomingRequest('http://example.com/discord/999999999/exists', {
-      method: 'GET',
+  it('should return 400 for invalid setting_key', async () => {
+    const request = new IncomingRequest('http://example.com/discord/123456789/new', {
+      method: 'POST',
       headers: validHeaders,
+      body: JSON.stringify({ 
+        setting_key: 'invalid_setting',
+        setting_value: 'some_value'
+      }),
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
     
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(400);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: true, data: { exists: false } });
+    expect(body).toEqual({ success: false, error: 'Invalid setting_key: setting does not exist' });
+  });
+
+  it('should create new discord setting successfully', async () => {
+    const request = new IncomingRequest('http://example.com/discord/123456789/new', {
+      method: 'POST',
+      headers: validHeaders,
+      body: JSON.stringify({ 
+        setting_key: 'notification_channel',
+        setting_value: '1234567890123456789'
+      }),
+    });
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    
+    expect(response.status).toBe(201);
+    const body = await response.json() as any;
+    expect(body).toHaveProperty('success');
   });
 });

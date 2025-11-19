@@ -12,16 +12,16 @@ import { DiscordSetting } from '../models';
 import { ErrorResponse, JsonResponse } from '../responses';
 
 // =================================================================================================
-// DiscordServerExists Function
+// ServerExists Function
 // =================================================================================================
 
 /**
  * @description Checks if a Discord server exists in the database by its Discord server ID.
- * @param {string} discordServerId The ID of the Discord server.
+ * @param {string} discordServerId The Discord server ID.
  * @param {Env} env The Cloudflare Worker environment object.
- * @returns {Promise<Response>} A response indicating whether the Discord server exists or not.
+ * @returns {Promise<Response>} A response indicating whether the server exists.
  */
-export async function DiscordServerExists(discordServerId: string, env: Env): Promise<Response> {
+export async function ServerExists(_request: Request, env: Env, discordServerId: string): Promise<Response> {
     try {
         // Input validation
         if (!discordServerId) {

@@ -27,30 +27,25 @@ export async function validateApiKey(request: Request, env: Env): Promise<boolea
 }
 
 /**
- * Validates that a Discord user is an authorized admin/staff member
- * Checks both bot_admin and staff tables
+ * Validates that a user is an authorized admin
+ * Checks only the bot_admin table
+ * @param userId Can be either a Discord ID or an admin_id
  */
-export async function validateAdmin(discordId: string, env: Env): Promise<boolean> {
+export async function validateAdmin(userId: string, env: Env): Promise<boolean> {
     try {
-        // Check if user exists in bot_admin table
-        const adminCheck = env.DB.prepare(
-            'SELECT admin_id FROM bot_admin WHERE discord_id = ? LIMIT 1'
-        ).bind(discordId);
+        // Check if user exists in bot_admin table by discord_id
+        const adminCheckByDiscordId = env.DB.prepare('SELECT admin_id FROM bot_admin WHERE discord_id = ? LIMIT 1').bind(userId);
+        const adminByDiscordId = await adminCheckByDiscordId.first();
         
-        const admin = await adminCheck.first();
-        
-        if (admin) {
+        if (adminByDiscordId) {
             return true;
         }
         
-        // Check if user exists in staff table
-        const staffCheck = env.DB.prepare(
-            'SELECT staff_id FROM staff WHERE discord_id = ? LIMIT 1'
-        ).bind(discordId);
+        // Check if user exists in bot_admin table by admin_id
+        const adminCheckById = env.DB.prepare('SELECT admin_id FROM bot_admin WHERE admin_id = ? LIMIT 1').bind(userId);
+        const adminById = await adminCheckById.first();
         
-        const staff = await staffCheck.first();
-        
-        return staff !== null;
+        return adminById !== null;
     } catch (error) {
         console.error('Error validating admin:', error);
         return false;

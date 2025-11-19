@@ -8,7 +8,7 @@ import test from '../../db/test.sql?raw';
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
-describe('GET /discord/{server_id}/exists - ServerExists', () => {
+describe('GET /discord/{SERVER_ID}/list - ListSettings', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
     'X-User-ID': 'stf_test',
@@ -57,7 +57,7 @@ describe('GET /discord/{server_id}/exists - ServerExists', () => {
   });
 
   it('should return 405 for non-GET methods', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/exists', {
+    const request = new IncomingRequest('http://example.com/discord/1234567890/list', {
       method: 'POST',
       headers: validHeaders,
     });
@@ -67,11 +67,11 @@ describe('GET /discord/{server_id}/exists - ServerExists', () => {
     
     expect(response.status).toBe(405);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: false, error: 'Method POST not allowed for /discord/123456789/exists' });
+    expect(body).toEqual({ success: false, error: 'Method POST not allowed for /discord/1234567890/list' });
   });
 
-  it('should check if server exists', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/exists', {
+  it('should list all settings for a specific server', async () => {
+    const request = new IncomingRequest('http://example.com/discord/1234567890/list', {
       method: 'GET',
       headers: validHeaders,
     });
@@ -81,11 +81,15 @@ describe('GET /discord/{server_id}/exists - ServerExists', () => {
     
     expect(response.status).toBe(200);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: true, data: { exists: true } });
+    expect(body).toHaveProperty('success');
+    if (body.success) {
+      expect(body).toHaveProperty('data');
+      expect(Array.isArray(body.data)).toBe(true);
+    }
   });
 
-  it('should return false for non-existent server', async () => {
-    const request = new IncomingRequest('http://example.com/discord/999999999/exists', {
+  it('should list settings with limit parameter', async () => {
+    const request = new IncomingRequest('http://example.com/discord/1234567890/list?limit=5', {
       method: 'GET',
       headers: validHeaders,
     });
@@ -95,6 +99,20 @@ describe('GET /discord/{server_id}/exists - ServerExists', () => {
     
     expect(response.status).toBe(200);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: true, data: { exists: false } });
+    expect(body).toHaveProperty('success');
+  });
+
+  it('should list settings with date filters', async () => {
+    const request = new IncomingRequest('http://example.com/discord/1234567890/list?start_date=2024-01-01&end_date=2024-12-31', {
+      method: 'GET',
+      headers: validHeaders,
+    });
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    
+    expect(response.status).toBe(200);
+    const body = await response.json() as any;
+    expect(body).toHaveProperty('success');
   });
 });

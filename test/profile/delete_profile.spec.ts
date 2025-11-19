@@ -8,11 +8,10 @@ import test from '../../db/test.sql?raw';
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
-describe('GET /discord/{server_id}/exists - ServerExists', () => {
+describe('DELETE /profile/{id}/delete - DeleteProfile', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
-    'X-User-ID': 'stf_test',
-    'X-Discord-Name': 'TestStaff',
+    'X-User-ID': 'test-user-id',
     'Content-Type': 'application/json',
   };
   const localEnv = { ...env, API_KEY: 'test-api-key' };
@@ -56,9 +55,9 @@ describe('GET /discord/{server_id}/exists - ServerExists', () => {
     await localEnv.DB.batch(statements);
   });
 
-  it('should return 405 for non-GET methods', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/exists', {
-      method: 'POST',
+  it('should return 405 for non-DELETE methods', async () => {
+    const request = new IncomingRequest('http://example.com/profile/usr_test/delete', {
+      method: 'GET',
       headers: validHeaders,
     });
     const ctx = createExecutionContext();
@@ -67,12 +66,38 @@ describe('GET /discord/{server_id}/exists - ServerExists', () => {
     
     expect(response.status).toBe(405);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: false, error: 'Method POST not allowed for /discord/123456789/exists' });
+    expect(body).toEqual({ success: false, error: 'Method GET not allowed for /profile/usr_test/delete' });
   });
 
-  it('should check if server exists', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/exists', {
-      method: 'GET',
+  it('should return 404 for non-existent profile', async () => {
+    const request = new IncomingRequest('http://example.com/profile/usr_nonexistent/delete', {
+      method: 'DELETE',
+      headers: validHeaders,
+    });
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    
+    expect(response.status).toBe(404);
+    const body = await response.json() as any;
+    expect(body.success).toBe(false);
+  });
+
+  it('should return 403 for banned user trying to delete', async () => {
+    const request = new IncomingRequest('http://example.com/profile/usr_test_banned/delete', {
+      method: 'DELETE',
+      headers: validHeaders,
+    });
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    
+    expect(response.status).toBe(403);
+  });
+
+  it('should delete profile successfully', async () => {
+    const request = new IncomingRequest('http://example.com/profile/usr_test/delete', {
+      method: 'DELETE',
       headers: validHeaders,
     });
     const ctx = createExecutionContext();
@@ -81,20 +106,6 @@ describe('GET /discord/{server_id}/exists - ServerExists', () => {
     
     expect(response.status).toBe(200);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: true, data: { exists: true } });
-  });
-
-  it('should return false for non-existent server', async () => {
-    const request = new IncomingRequest('http://example.com/discord/999999999/exists', {
-      method: 'GET',
-      headers: validHeaders,
-    });
-    const ctx = createExecutionContext();
-    const response = await worker.fetch(request, localEnv, ctx);
-    await waitOnExecutionContext(ctx);
-    
-    expect(response.status).toBe(200);
-    const body = await response.json() as any;
-    expect(body).toEqual({ success: true, data: { exists: false } });
+    expect(body).toEqual({ success: true, message: 'Profile deleted successfully' });
   });
 });

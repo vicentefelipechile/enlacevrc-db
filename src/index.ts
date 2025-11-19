@@ -9,23 +9,10 @@
 // Import Statements
 // =================================================================================================
 
-import { DeleteProfile } from './profile/delete';
-import { UpdateProfile } from './profile/update';
+import { ProfileHandler } from './profile/_handler';
+import { DiscordHandler } from './discord/_handler';
+import { StaffHandler } from './staff/_handler';
 import { ErrorResponse } from './responses';
-import { AddProfile } from './profile/add';
-import { GetProfile } from './profile/get';
-import { ListProfiles } from './profile/list';
-import { AddDiscordSetting } from './discord/add';
-import { GetDiscordSetting } from './discord/get';
-import { UpdateDiscordSetting } from './discord/update';
-import { DeleteDiscordSetting } from './discord/delete';
-import { DiscordServerExists } from './discord/exists';
-import { ListDiscordSettings } from './discord/list';
-import { AddStaff } from './staff/add';
-import { GetStaff } from './staff/get';
-import { UpdateStaff } from './staff/update';
-import { DeleteStaff } from './staff/delete';
-import { ListStaff } from './staff/list';
 import { GetLogs } from './logs/get';
 import { ValidateAdminAccess } from './logs/validate-admin';
 
@@ -111,94 +98,22 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
         return ErrorResponse('X-User-ID header is required', 400);
     }
 
-    if (pathParts[0] === 'profiles') {
+    if (pathParts[0] === 'profile') {
         const profileId = pathParts.length > 1 ? pathParts[1] : undefined;
-
-        // Handle /profiles/list
-        if (profileId === 'list' && request.method === 'GET') {
-            return ListProfiles(request, env, userId);
-        }
-
-        switch (request.method) {
-            case 'POST':
-                if (profileId) return ErrorResponse('POST requests cannot include an ID in the URL', 400);
-                return AddProfile(request, env, userId);
-            case 'GET':
-                if (!profileId) return ErrorResponse('A profile ID is required for GET requests (e.g., /profiles/some_id)', 400);
-                return GetProfile(profileId, env, userId);
-            case 'PUT':
-                if (!profileId) return ErrorResponse('A profile ID is required for PUT requests (e.g., /profiles/some_id)', 400);
-                return UpdateProfile(request, profileId, env, userId);
-            case 'DELETE':
-                if (!profileId) return ErrorResponse('A profile ID is required for DELETE requests (e.g., /profiles/some_id)', 400);
-                return DeleteProfile(profileId, env, userId);
-            default:
-                return ErrorResponse(`Method ${request.method} not allowed`, 405);
-        }
+        const action = pathParts.length > 2 ? pathParts[2] : undefined;
+        return ProfileHandler(request, env, userId, profileId, action);
     }
 
-    if (pathParts[0] === 'discord-settings') {
-        const discordServerId = pathParts.length > 1 ? pathParts[1] : undefined;
+    if (pathParts[0] === 'discord') {
+        const serverId = pathParts.length > 1 ? pathParts[1] : undefined;
         const action = pathParts.length > 2 ? pathParts[2] : undefined;
-
-        // Handle /discord-settings/list
-        if (discordServerId === 'list' && request.method === 'GET') {
-            return ListDiscordSettings(request, env, userId);
-        }
-
-        // Handle /discord-settings/:id/exists
-        if (action === 'exists' && request.method === 'GET') {
-            if (!discordServerId) return ErrorResponse('A server ID is required for exists check (e.g., /discord-settings/some_id/exists)', 400);
-            return DiscordServerExists(discordServerId, env);
-        }
-
-        // Reject unknown actions
-        if (action && action !== 'exists') {
-            return ErrorResponse(`Unknown action: ${action}`, 404);
-        }
-
-        switch (request.method) {
-            case 'POST':
-                if (!discordServerId) return ErrorResponse('A server ID is required for POST requests (e.g., /discord-settings/some_id)', 400);
-                return AddDiscordSetting(request, discordServerId, env);
-            case 'GET':
-                if (!discordServerId) return ErrorResponse('A server ID is required for GET requests (e.g., /discord-settings/some_id)', 400);
-                return GetDiscordSetting(request, discordServerId, env);
-            case 'PUT':
-                if (!discordServerId) return ErrorResponse('A server ID is required for PUT requests (e.g., /discord-settings/some_id)', 400);
-                return UpdateDiscordSetting(request, discordServerId, env);
-            case 'DELETE':
-                if (!discordServerId) return ErrorResponse('A server ID is required for DELETE requests (e.g., /discord-settings/some_id)', 400);
-                return DeleteDiscordSetting(request, discordServerId, env);
-            default:
-                return ErrorResponse(`Method ${request.method} not allowed.`, 405);
-        }
+        return DiscordHandler(request, env, userId, serverId, action);
     }
 
     if (pathParts[0] === 'staff') {
         const staffId = pathParts.length > 1 ? pathParts[1] : undefined;
-
-        // Handle /staff/list
-        if (staffId === 'list' && request.method === 'GET') {
-            return ListStaff(request, env, userId);
-        }
-        
-        switch (request.method) {
-            case 'POST':
-                if (staffId) return ErrorResponse('POST requests cannot include an ID in the URL', 400);
-                return AddStaff(request, env);
-            case 'GET':
-                // Allow GET without ID to return all staff members
-                return GetStaff(staffId, env);
-            case 'PUT':
-                if (!staffId) return ErrorResponse('A staff ID is required for PUT requests (e.g., /staff/some_id)', 400);
-                return UpdateStaff(request, staffId, env);
-            case 'DELETE':
-                if (!staffId) return ErrorResponse('A staff ID is required for DELETE requests (e.g., /staff/some_id)', 400);
-                return DeleteStaff(staffId, env);
-            default:
-                return ErrorResponse(`Method ${request.method} not allowed`, 405);
-        }
+        const action = pathParts.length > 2 ? pathParts[2] : undefined;
+        return StaffHandler(request, env, userId, staffId, action);
     }
 
     // SECURE ENDPOINTS - Logs (Admin Only)
