@@ -25,14 +25,12 @@ export async function ValidateAdminAccess(request: Request, env: Env): Promise<R
     try {
         // Validate API key
         const hasValidKey = await validateApiKey(request, env);
-        
         if (!hasValidKey) {
             return ErrorResponse('Unauthorized: Invalid or missing API key', 401);
         }
 
         // Extract Discord ID from request headers
         const discordId = request.headers.get('X-Discord-ID');
-
         if (!discordId) {
             return ErrorResponse('Missing header: X-Discord-ID', 400);
         }

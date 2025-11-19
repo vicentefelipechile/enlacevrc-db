@@ -11,7 +11,7 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 describe('PUT /discord/{server_id}/update - UpdateSetting', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
-    'X-User-ID': 'stf_test',
+    'X-Discord-ID': '987654321',
     'X-Discord-Name': 'TestStaff',
     'Content-Type': 'application/json',
   };
@@ -61,7 +61,6 @@ describe('PUT /discord/{server_id}/update - UpdateSetting', () => {
       method: 'GET',
       headers: validHeaders,
     });
-    const localEnv = { ...env, API_KEY: 'test-api-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -77,7 +76,6 @@ describe('PUT /discord/{server_id}/update - UpdateSetting', () => {
       headers: validHeaders,
       body: JSON.stringify({}),
     });
-    const localEnv = { ...env, API_KEY: 'test-api-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -96,7 +94,6 @@ describe('PUT /discord/{server_id}/update - UpdateSetting', () => {
         setting_value: '%'
       }),
     });
-    const localEnv = { ...env, API_KEY: 'test-api-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -115,7 +112,6 @@ describe('PUT /discord/{server_id}/update - UpdateSetting', () => {
         setting_value: 'some_value'
       }),
     });
-    const localEnv = { ...env, API_KEY: 'test-api-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -134,7 +130,6 @@ describe('PUT /discord/{server_id}/update - UpdateSetting', () => {
         setting_value: '%'
       }),
     });
-    const localEnv = { ...env, API_KEY: 'test-api-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);

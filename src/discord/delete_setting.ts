@@ -8,7 +8,8 @@
 // Import Statements
 // =================================================================================================
 
-import { DiscordSetting } from '../models';
+import { LogIt, LogLevel } from '../loglevel';
+import { DiscordServer, DiscordSetting } from '../models';
 import { ErrorResponse, SuccessResponse } from '../responses';
 
 // =================================================================================================
@@ -25,6 +26,7 @@ import { ErrorResponse, SuccessResponse } from '../responses';
 export async function DeleteSetting(request: Request, env: Env, discordServerId: string): Promise<Response> {
     try {
         // Data extraction
+        const userName = request.headers.get('X-Discord-Name')!;
         const data: Partial<DiscordSetting> = await request.json();
         
         // Basic validation
@@ -33,7 +35,7 @@ export async function DeleteSetting(request: Request, env: Env, discordServerId:
         }
 
         // Find the generated server_id
-        const server = await env.DB.prepare('SELECT server_id FROM discord_server WHERE discord_server_id = ?').bind(discordServerId).first() as { server_id: string } | null;
+        const server = await env.DB.prepare('SELECT 1 FROM discord_server WHERE discord_server_id = ?').bind(discordServerId).first<DiscordServer>();
         if (!server) return ErrorResponse('Invalid discord_server_id: server does not exist', 400);
 
         // Variable extraction
@@ -54,10 +56,7 @@ export async function DeleteSetting(request: Request, env: Env, discordServerId:
             return ErrorResponse('Failed to delete Discord setting. It may not exist', 404);
         }
 
-        // Log the action
-        const logStmt = env.DB.prepare('INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)');
-        await logStmt.bind(1, `Discord setting deleted: ${settingKey} for server ${discordServerId}`, 'system').run();
-
+        await LogIt(env.DB, LogLevel.REMOVAL, `Discord setting deleted: ${settingKey} for server ${discordServerId}`, userName);
         return SuccessResponse('Setting deleted successfully');
     } catch (error) {
         return ErrorResponse('Failed to delete Discord setting', 500);

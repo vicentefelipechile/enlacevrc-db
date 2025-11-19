@@ -11,7 +11,7 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 describe('DELETE /profile/{id}/delete - DeleteProfile', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
-    'X-User-ID': 'test-user-id',
+    'X-Discord-ID': 'test-user-id',
     'Content-Type': 'application/json',
   };
   const localEnv = { ...env, API_KEY: 'test-api-key' };

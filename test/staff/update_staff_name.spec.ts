@@ -11,7 +11,7 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 describe('PUT /staff/{staff_id}/update_name - UpdateStaffName', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
-    'X-User-ID': 'adm_test',
+    'X-Discord-ID': '10203040',
     'X-Discord-Name': 'TestAdmin',
     'Content-Type': 'application/json',
   };
@@ -133,7 +133,7 @@ describe('PUT /staff/{staff_id}/update_name - UpdateStaffName', () => {
   it('should return 403 for non-admin users', async () => {
     const nonAdminHeaders = {
       ...validHeaders,
-      'X-User-ID': 'regular_user',
+      'X-Discord-ID': 'regular_user',
     };
     const request = new IncomingRequest('http://example.com/staff/987654321/update_name', {
       method: 'PUT',

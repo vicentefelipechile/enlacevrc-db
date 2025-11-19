@@ -34,13 +34,9 @@ export async function NewSetting(request: Request, env: Env, discordServerId: st
         }
 
         // Validate and ensure server exists
-        let server = await env.DB.prepare('SELECT server_id FROM discord_server WHERE discord_server_id = ?').bind(discordServerId).first() as { server_id: string } | null;
+        let server = await env.DB.prepare('SELECT discord_server_id FROM discord_server WHERE discord_server_id = ?').bind(discordServerId).first() as { discord_server_id: string } | null;
         if (!server) {
-            // Server does not exist, add it
-            const generatedServerId = `srv_${crypto.randomUUID()}`;
-            const insertServer = env.DB.prepare('INSERT INTO discord_server (server_id, discord_server_id, server_name, added_by) VALUES (?, ?, ?, ?)');
-            await insertServer.bind(generatedServerId, discordServerId, 'Unknown Server', 'system').run();
-            server = { server_id: generatedServerId };
+            return ErrorResponse('Invalid discord_server_id: server does not exist', 400);
         }
 
         const settingCheck = await env.DB.prepare('SELECT 1 FROM setting WHERE setting_name = ?').bind(data.setting_key).first();

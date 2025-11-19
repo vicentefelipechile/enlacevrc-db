@@ -8,7 +8,8 @@
 // Import Statements
 // =================================================================================================
 
-import { DiscordSetting } from '../models';
+import { LogIt, LogLevel } from '../loglevel';
+import { DiscordServer, DiscordSetting, Setting } from '../models';
 import { ErrorResponse, SuccessResponse } from '../responses';
 
 // =================================================================================================
@@ -26,36 +27,34 @@ export async function UpdateSetting(request: Request, env: Env, discordServerId:
     try {
         // Data extraction
         const data: Partial<DiscordSetting> = await request.json();
+        const userId = request.headers.get('X-Discord-ID')!;
+        const userName = request.headers.get('X-Discord-Name')!;
 
         // Basic validation
         if (!data.setting_key || !data.setting_value) {
             return ErrorResponse('Missing required fields: setting_key and setting_value are required', 400);
         }
 
-        // Find the generated server_id
-        const server = await env.DB.prepare('SELECT server_id FROM discord_server WHERE discord_server_id = ?').bind(discordServerId).first() as { server_id: string } | null;
+        // Find the generated discord_server_id
+        const server = await env.DB.prepare('SELECT 1 FROM discord_server WHERE discord_server_id = ?').bind(discordServerId).first<DiscordServer>();
         if (!server) return ErrorResponse('Invalid discord_server_id: server does not exist', 400);
 
-        const settingCheck = await env.DB.prepare('SELECT 1 FROM setting WHERE setting_name = ?').bind(data.setting_key).first();
+        const settingCheck = await env.DB.prepare('SELECT 1 FROM setting WHERE setting_name = ?').bind(data.setting_key).first<Setting>();
         if (!settingCheck) return ErrorResponse('Invalid setting_key: setting does not exist', 400);
 
         // Variable extraction
         const {
             setting_key: settingKey,
             setting_value: settingValue,
-            updated_by: updatedBy = 'system'
         } = data;
 
         // Statement preparation and execution
         const statement = env.DB.prepare('UPDATE discord_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE discord_server_id = ? AND setting_key = ?');
-        const { success } = await statement.bind(settingValue, updatedBy, server.server_id, settingKey).run();
+        const { success } = await statement.bind(settingValue, userId, discordServerId, settingKey).run();
 
         // Database result handling
         if (success) {
-            // Log the action
-            const logStmt = env.DB.prepare('INSERT INTO log (log_level_id, log_message, created_by) VALUES (?, ?, ?)');
-            await logStmt.bind(1, `Discord setting updated: ${settingKey} for server ${discordServerId}`, 'system').run();
-
+            await LogIt(env.DB, LogLevel.CHANGE, `Discord setting '${settingKey}' updated to '${settingValue}' for server ID ${discordServerId} by user ID ${userId}`, userName);
             return SuccessResponse('Discord setting updated successfully', 200);
         } else {
             return ErrorResponse('Failed to update Discord setting', 500);

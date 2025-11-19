@@ -1,23 +1,23 @@
-INSERT INTO bot_admin (admin_id, discord_id, added_by) VALUES ('adm_test', '122333', 'vicentefelipechile');
-INSERT INTO staff (staff_id, discord_id, discord_name, added_by) VALUES ('stf_test', '987654321', 'TestStaff', 'adm_test');
-INSERT INTO discord_server (server_id, discord_server_id, server_name, added_by) VALUES ('srv_test', '123456789', 'TestServer', 'adm_test');
+INSERT INTO bot_admin (discord_id, added_by) VALUES ('10203040', 'vicentefelipechile');
+INSERT INTO staff (discord_id, discord_name, added_by) VALUES ('987654321', 'TestStaff', '10203040');
+INSERT INTO discord_server (discord_server_id, server_name, added_by) VALUES ('123456789', 'TestServer', '10203040');
 
 INSERT INTO setting (setting_name, setting_type_name, created_by) VALUES (
     'prefix',
     'string',
-    'adm_test'
+    '10203040'
 );
 
 INSERT INTO setting (setting_name, setting_type_name, created_by) VALUES (
     'welcome_message',
     'string',
-    'adm_test'
+    '10203040'
 );
 
 INSERT INTO setting (setting_name, setting_type_name, created_by) VALUES (
     'notification_channel',
     'string',
-    'adm_test'
+    '10203040'
 );
 
 INSERT INTO discord_settings (discord_server_id, setting_key, setting_value) VALUES (
@@ -32,44 +32,43 @@ INSERT INTO discord_settings (discord_server_id, setting_key, setting_value) VAL
     'Welcome to the server!'
 );
 
-INSERT INTO profiles (profile_id, vrchat_id, discord_id, vrchat_name, created_by) VALUES (
-    'prf_test',
+INSERT INTO profiles (discord_id, vrchat_id, vrchat_name, created_by) VALUES (
+    '11213141',
     'usr_test',
-    '333221',
     'TestUser',
-    'prf_test'
+    '11213141'
 );
 
 INSERT INTO profiles (
-    profile_id,
-    vrchat_id,
     discord_id,
+    vrchat_id,
     vrchat_name,
     created_by,
+    updated_by,
 
     is_banned,
     banned_at,
     banned_reason,
     banned_by
 ) VALUES (
-    'prf_test_banned',
+    '12223242',
     'usr_test_banned',
-    '333222',
     'TestUserBanned',
-    'prf_test_banned',
+    '12223242',
+    '987654321',
 
     TRUE,
     CURRENT_TIMESTAMP,
     'Violation of terms',
-    'stf_test'
+    '987654321'
 );
 
 INSERT INTO profiles (
-    profile_id, 
-    vrchat_id,
     discord_id,
+    vrchat_id,
     vrchat_name,
     created_by,
+    updated_by,
 
     is_verified,
     verification_id,
@@ -77,15 +76,15 @@ INSERT INTO profiles (
     verified_from,
     verified_by
 ) VALUES (
-    'prf_test_verified',
+    '13233443',
     'usr_test_verified',
-    'discord_unique',
     'UniqueUser',
-    'prf_test_verified',
+    '13233443',
+    '987654321',
 
     TRUE,
     3,
     CURRENT_TIMESTAMP,
     '123456789',
-    'stf_test'
+    '987654321'
 );

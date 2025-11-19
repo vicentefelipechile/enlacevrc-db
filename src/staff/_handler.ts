@@ -34,7 +34,7 @@ export async function StaffHandler(request: Request, env: Env, userId: string, s
         if (request.method !== 'POST') {
             return ErrorResponse(`Method ${request.method} not allowed for /staff/new`, 405);
         }
-        return NewStaff(request, env, userId);
+        return NewStaff(request, env);
     }
 
     if (staffId === 'list') {
@@ -46,7 +46,7 @@ export async function StaffHandler(request: Request, env: Env, userId: string, s
 
     // Require both staffId and action for other operations
     if (!staffId || !action) {
-        return ErrorResponse('Invalid staff endpoint. Use /staff/new, /staff/list, or /staff/{id}/{action}', 404);
+        return ErrorResponse('Invalid staff endpoint', 400);
     }
 
     // Handle actions that require a staff ID

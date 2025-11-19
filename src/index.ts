@@ -29,7 +29,7 @@ function AddCorsHeaders(response: Response): Response {
     const headers = new Headers(response.headers);
     headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Api-Key, X-Discord-ID, X-Discord-Name, X-User-ID');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Api-Key, X-Discord-ID, X-Discord-Name');
     headers.set('Access-Control-Max-Age', '86400');
     
     return new Response(response.body, {
@@ -49,8 +49,8 @@ function HandlePreflight(): Response {
         headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Discord-ID, X-Discord-Name, X-User-ID',
-            'Access-Control-Expose-Headers': 'Content-Type, Authorization, X-Api-Key, X-Discord-ID, X-Discord-Name, X-User-ID',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Api-Key, X-Discord-ID, X-Discord-Name',
+            'Access-Control-Expose-Headers': 'Content-Type, Authorization, X-Api-Key, X-Discord-ID, X-Discord-Name',
             'Access-Control-Max-Age': '86400',
         },
     });
@@ -84,7 +84,7 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
     const { pathname } = new URL(request.url);
     const pathParts = pathname.split('/').filter(p => p);
 
-    // Public endpoints that don't require X-User-ID or full authentication
+    // Public endpoints that don't require X-Discord-ID or full authentication
     if (pathParts[0] === 'auth' && pathParts[1] === 'validate-admin') {
         if (request.method === 'GET') {
             return ValidateAdminAccess(request, env);
@@ -92,10 +92,10 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
         return ErrorResponse(`Method ${request.method} not allowed`, 405);
     }
 
-    // All other endpoints require X-User-ID
-    const userId = request.headers.get('X-User-ID');
+    // All other endpoints require X-Discord-ID
+    const userId = request.headers.get('X-Discord-ID');
     if (!userId) {
-        return ErrorResponse('X-User-ID header is required', 400);
+        return ErrorResponse('X-Discord-ID header is required', 400);
     }
 
     if (pathParts[0] === 'profile') {

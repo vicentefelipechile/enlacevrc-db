@@ -49,7 +49,7 @@ export async function ProfileHandler(request: Request, env: Env, userId: string,
 
     // Require both profileId and action for other operations
     if (!profileId || !action) {
-        return ErrorResponse('Invalid profile endpoint. Use /profile/new, /profile/list, or /profile/{id}/{action}', 404);
+        return ErrorResponse('Invalid profile endpoint', 400);
     }
 
     // Handle actions that require a profile ID
@@ -91,6 +91,6 @@ export async function ProfileHandler(request: Request, env: Env, userId: string,
             return UnverifyProfile(request, env, userId, profileId);
         
         default:
-            return ErrorResponse(`Unknown action: ${action || 'none'}. Valid actions are: get, delete, ban, unban, verify, unverify. Use /profile/new or /profile/list for other operations`, 404);
+            return ErrorResponse('Unknown action', 404);
     }
 }

@@ -11,7 +11,7 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 describe('PUT /profile/{id}/unverify - UnverifyProfile', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
-    'X-User-ID': 'stf_test',
+    'X-Discord-ID': '987654321',
     'X-Discord-Name': 'TestStaff',
     'Content-Type': 'application/json',
   };
@@ -101,7 +101,7 @@ describe('PUT /profile/{id}/unverify - UnverifyProfile', () => {
   it('should return 403 for non-staff users', async () => {
     const nonStaffHeaders = {
       ...validHeaders,
-      'X-User-ID': 'regular_user',
+      'X-Discord-ID': 'regular_user',
     };
     const request = new IncomingRequest('http://example.com/profile/usr_test/unverify', {
       method: 'PUT',
@@ -113,7 +113,7 @@ describe('PUT /profile/{id}/unverify - UnverifyProfile', () => {
     
     expect(response.status).toBe(403);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: false, error: 'Only staff members can unverify profiles' });
+    expect(body).toEqual({ success: false, error: 'Forbidden: Staff privileges required' });
   });
 
   it('should return 409 when profile is already unverified', async () => {

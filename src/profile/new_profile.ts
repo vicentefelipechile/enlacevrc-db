@@ -26,6 +26,7 @@ import { LogIt, LogLevel } from '../loglevel';
 export async function NewProfile(request: Request, env: Env, userId: string): Promise<Response> {
     let vrchatId: string | undefined;
     let discordId: string | undefined;
+    const userName = request.headers.get('X-Discord-Name')!;
     
     try {
         // Data extraction
@@ -36,9 +37,6 @@ export async function NewProfile(request: Request, env: Env, userId: string): Pr
             return ErrorResponse('Missing required fields: vrchat_id, discord_id and vrchat_name are required', 400);
         }
 
-        // Generate new profile ID
-        const profileId = `prf_${crypto.randomUUID()}`;
-
         // Variable extraction
         let vrchatName: string;
         ({
@@ -48,17 +46,10 @@ export async function NewProfile(request: Request, env: Env, userId: string): Pr
         } = newProfileData);
 
         // Statement preparation and execution
-        const statement = env.DB.prepare(`
-            INSERT INTO profiles (
-                profile_id, vrchat_id, discord_id, vrchat_name, created_by
-            ) VALUES (?, ?, ?, ?, ?)
-        `);
-        const { success, meta } = await statement.bind(
-            profileId, vrchatId, discordId, vrchatName, userId
-        ).run();
+        const statement = env.DB.prepare('INSERT INTO profiles (discord_id, vrchat_id, vrchat_name, created_by) VALUES (?, ?, ?, ?)');
+        const { success } = await statement.bind(discordId, vrchatId, vrchatName, userId).run();
 
         // Database result handling
-        const userName = request.headers.get('X-Discord-Name')!;
         if (success) {
             // Log the action
             await LogIt(env.DB, LogLevel.ADDITION, `Profile with VRChat ID '${vrchatId}' added by user ${userId}`, userName);
@@ -69,9 +60,6 @@ export async function NewProfile(request: Request, env: Env, userId: string): Pr
         }
     } catch (e: unknown) {
         const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred';
-        console.error(`Error adding profile: ${errorMessage}`);
-
-        const userName = request.headers.get('X-Discord-Name')!;
 
         // Handle UNIQUE constraint violations
         if (errorMessage.includes('UNIQUE constraint failed')) {

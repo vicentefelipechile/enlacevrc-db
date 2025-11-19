@@ -72,7 +72,6 @@ export async function GetLogs(request: Request, env: Env): Promise<Response> {
         const result = await statement.all<Log>();
 
         if (!result.success) {
-            console.error('Database query failed for logs');
             return ErrorResponse('Failed to retrieve logs', 500);
         }
 

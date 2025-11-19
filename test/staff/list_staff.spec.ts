@@ -11,7 +11,7 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 describe('GET /staff/list - ListStaff', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
-    'X-User-ID': 'adm_test',
+    'X-Discord-ID': '10203040',
     'X-Discord-Name': 'TestStaff',
     'Content-Type': 'application/json',
   };
@@ -119,7 +119,7 @@ describe('GET /staff/list - ListStaff', () => {
   it('should return 403 for non-staff users', async () => {
     const nonStaffHeaders = {
       ...validHeaders,
-      'X-User-ID': 'regular_user',
+      'X-Discord-ID': 'regular_user',
     };
     const request = new IncomingRequest('http://example.com/staff/list', {
       method: 'GET',

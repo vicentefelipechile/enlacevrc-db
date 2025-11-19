@@ -11,7 +11,7 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 describe('POST /staff/new - NewStaff', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
-    'X-User-ID': 'adm_test',
+    'X-Discord-ID': '10203040',
     'X-Discord-Name': 'TestAdmin',
     'Content-Type': 'application/json',
   };
@@ -82,26 +82,7 @@ describe('POST /staff/new - NewStaff', () => {
     
     expect(response.status).toBe(400);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: false, error: 'Missing required fields: discord_id and added_by are required' });
-  });
-
-  it('should return 400 for invalid added_by', async () => {
-    const request = new IncomingRequest('http://example.com/staff/new', {
-      method: 'POST',
-      headers: validHeaders,
-      body: JSON.stringify({ 
-        discord_id: '10987654321',
-        discord_name: 'NewStaff',
-        added_by: 'invalid_admin'
-      }),
-    });
-    const ctx = createExecutionContext();
-    const response = await worker.fetch(request, localEnv, ctx);
-    await waitOnExecutionContext(ctx);
-    
-    expect(response.status).toBe(400);
-    const body = await response.json() as any;
-    expect(body).toEqual({ success: false, error: 'Invalid added_by: bot admin does not exist' });
+    expect(body).toEqual({ success: false, error: 'Missing required fields: discord_id' });
   });
 
   it('should create new staff member successfully', async () => {
@@ -111,7 +92,6 @@ describe('POST /staff/new - NewStaff', () => {
       body: JSON.stringify({ 
         discord_id: '10987654321',
         discord_name: 'NewStaff',
-        added_by: 'adm_test'
       }),
     });
     const ctx = createExecutionContext();
@@ -126,7 +106,7 @@ describe('POST /staff/new - NewStaff', () => {
   it('should return 403 for non-admin users', async () => {
     const nonAdminHeaders = {
       ...validHeaders,
-      'X-User-ID': 'regular_user',
+      'X-Discord-ID': 'regular_user',
     };
     const request = new IncomingRequest('http://example.com/staff/new', {
       method: 'POST',
@@ -134,7 +114,6 @@ describe('POST /staff/new - NewStaff', () => {
       body: JSON.stringify({ 
         discord_id: '987654321',
         discord_name: 'NewStaff',
-        added_by: 'adm_test'
       }),
     });
     const ctx = createExecutionContext();

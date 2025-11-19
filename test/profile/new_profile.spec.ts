@@ -11,7 +11,7 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 describe('POST /profile/new - NewProfile', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
-    'X-User-ID': 'test-user-id',
+    'X-Discord-ID': 'test-user-id',
     'X-Discord-Name': 'TestUser',
     'Content-Type': 'application/json',
   };
@@ -110,7 +110,7 @@ describe('POST /profile/new - NewProfile', () => {
       headers: validHeaders,
       body: JSON.stringify({
         vrchat_id: 'usr_test', // Already exists in test data
-        discord_id: '333221',
+        discord_id: '11213141',
         vrchat_name: 'DuplicateUser',
       }),
     });

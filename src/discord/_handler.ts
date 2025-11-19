@@ -32,7 +32,7 @@ import { ServerExists } from './exists';
 export async function DiscordHandler(request: Request, env: Env, userId: string, serverId: string | undefined, action: string | undefined): Promise<Response> {
     // Require both serverId and action for all operations
     if (!serverId || !action) {
-        return ErrorResponse('Invalid discord endpoint. Use /discord/{server_id}/{action}', 404);
+        return ErrorResponse('Invalid discord endpoint', 400);
     }
 
     // Handle actions that require a server ID
@@ -74,6 +74,6 @@ export async function DiscordHandler(request: Request, env: Env, userId: string,
             return ServerExists(request, env, serverId);
         
         default:
-            return ErrorResponse(`Unknown action: ${action || 'none'}. Valid actions are: new, get, list, update, delete, exists`, 404);
+            return ErrorResponse('Unknown action', 404);
     }
 }

@@ -64,7 +64,6 @@ describe('Router and Authentication', () => {
     const request = new IncomingRequest('http://example.com/profiles', {
       headers: { Authorization: 'Bearer incorrect-key' },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -73,27 +72,26 @@ describe('Router and Authentication', () => {
     expect(responseBody).toEqual({ success: false, error: 'Unauthorized' });
   });
 
-  it('should return 400 if X-User-ID header is missing', async () => {
+  it('should return 400 if X-Discord-ID header is missing', async () => {
     const request = new IncomingRequest('http://example.com/profiles/test-id', {
       headers: { Authorization: 'Bearer correct-key' },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
     const responseBody = await response.json() as any;
     expect(response.status).toBe(400);
-    expect(responseBody).toEqual({ success: false, error: 'X-User-ID header is required' });
+    expect(responseBody).toEqual({ success: false, error: 'X-Discord-ID header is required' });
   });
 
   it('should return 404 Not Found for routes not starting with /profile, /discord, or /staff', async () => {
     const request = new IncomingRequest('http://example.com/not-valid-route', {
         headers: { 
           Authorization: 'Bearer correct-key',
-          'X-User-ID': 'test-user-id'
+          'X-Discord-ID': 'test-user-id',
+          'X-Discord-Name': 'test-discord-name'
         },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -107,16 +105,16 @@ describe('Router and Authentication', () => {
     const request = new IncomingRequest('http://example.com/profile', {
       headers: {
         Authorization: 'Bearer correct-key',
-        'X-User-ID': 'test-user-id',
+        'X-Discord-ID': 'test-user-id',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
     const body = await response.json() as any;
     expect(response.status).toBe(400);
-    expect(body).toEqual({ success: false, error: 'Profile ID is required for this action. Use /profile/new for creating or /profile/list for listing' });
+    expect(body).toEqual({ success: false, error: 'Invalid profile endpoint' });
   });
 
   it('should return 404 for unknown action on /profile', async () => {
@@ -124,33 +122,33 @@ describe('Router and Authentication', () => {
       method: 'GET',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'X-User-ID': 'test-user-id'
+        'X-Discord-ID': 'test-user-id',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
     const responseBody = await response.json() as any;
     expect(response.status).toBe(404);
-    expect(responseBody).toEqual({ success: false, error: 'Unknown action: unknown-action. Valid actions are: get, delete, ban, unban, verify, unverify. Use /profile/new or /profile/list for other operations' });
+    expect(responseBody).toEqual({ success: false, error: 'Unknown action' });
   });
 
   it('should return 405 for wrong method on /profile/{id}/get', async () => {
-    const request = new IncomingRequest('http://example.com/profile/some-id/get', {
+    const request = new IncomingRequest('http://example.com/profile/usr_test/get', {
       method: 'POST',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'X-User-ID': 'test-user-id'
+        'X-Discord-ID': 'test-user-id',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
     const responseBody = await response.json() as any;
     expect(response.status).toBe(405);
-    expect(responseBody).toEqual({ success: false, error: 'Method POST not allowed for /profile/some-id/get' });
+    expect(responseBody).toEqual({ success: false, error: 'Method POST not allowed for /profile/usr_test/get' });
   });
 
   // Discord Settings Route Tests
@@ -159,50 +157,50 @@ describe('Router and Authentication', () => {
       method: 'GET',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'X-User-ID': 'test-user-id'
+        'X-Discord-ID': 'test-user-id',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
     const responseBody = await response.json() as any;
     expect(response.status).toBe(400);
-    expect(responseBody).toEqual({ success: false, error: 'Server ID is required for this action. Use /discord/list for listing all settings' });
+    expect(responseBody).toEqual({ success: false, error: 'Invalid discord endpoint' });
   });
 
   it('should return 404 for unknown action on /discord', async () => {
-    const request = new IncomingRequest('http://example.com/discord/server-id/unknown-action', {
+    const request = new IncomingRequest('http://example.com/discord/123456789/unknown-action', {
       method: 'GET',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'X-User-ID': 'test-user-id'
+        'X-Discord-ID': 'test-user-id',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
     const responseBody = await response.json() as any;
     expect(response.status).toBe(404);
-    expect(responseBody).toEqual({ success: false, error: 'Unknown action: unknown-action. Valid actions are: new, get, list, update, delete, exists' });
+    expect(responseBody).toEqual({ success: false, error: 'Unknown action' });
   });
 
   it('should return 405 for wrong method on /discord/{id}/exists', async () => {
-    const request = new IncomingRequest('http://example.com/discord/server-id/exists', {
+    const request = new IncomingRequest('http://example.com/discord/123456789/exists', {
       method: 'POST',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'X-User-ID': 'test-user-id'
+        'X-Discord-ID': 'test-user-id',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
     const responseBody = await response.json() as any;
     expect(response.status).toBe(405);
-    expect(responseBody).toEqual({ success: false, error: 'Method POST not allowed for /discord/server-id/exists' });
+    expect(responseBody).toEqual({ success: false, error: 'Method POST not allowed for /discord/123456789/exists' });
   });
 
   // Staff Route Tests
@@ -211,27 +209,27 @@ describe('Router and Authentication', () => {
       method: 'GET',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'X-User-ID': 'test-user-id'
+        'X-Discord-ID': 'test-user-id',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
     const responseBody = await response.json() as any;
     expect(response.status).toBe(400);
-    expect(responseBody).toEqual({ success: false, error: 'Staff ID is required for this action. Use /staff/new for creating or /staff/list for listing' });
+    expect(responseBody).toEqual({ success: false, error: 'Invalid staff endpoint' });
   });
 
   it('should return 404 for unknown action on /staff', async () => {
-    const request = new IncomingRequest('http://example.com/staff/staff-id/unknown-action', {
+    const request = new IncomingRequest('http://example.com/staff/987654321/unknown-action', {
       method: 'GET',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'X-User-ID': 'test-user-id'
+        'X-Discord-ID': 'test-user-id',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -241,20 +239,20 @@ describe('Router and Authentication', () => {
   });
 
   it('should return 405 for wrong method on /staff/{id}/update_name', async () => {
-    const request = new IncomingRequest('http://example.com/staff/staff-id/update_name', {
+    const request = new IncomingRequest('http://example.com/staff/987654321/update_name', {
       method: 'POST',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'X-User-ID': 'test-user-id'
+        'X-Discord-ID': 'test-user-id',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
     const responseBody = await response.json() as any;
     expect(response.status).toBe(405);
-    expect(responseBody).toEqual({ success: false, error: 'Method POST not allowed for /staff/staff-id/update_name' });
+    expect(responseBody).toEqual({ success: false, error: 'Method POST not allowed for /staff/987654321/update_name' });
   });
 
   // Logs Route Tests
@@ -264,10 +262,10 @@ describe('Router and Authentication', () => {
       headers: { 
         Authorization: 'Bearer correct-key',
         'X-Api-Key': 'correct-key',
-        'X-User-ID': 'test-user-id'
+        'X-Discord-ID': '10203040',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -282,10 +280,10 @@ describe('Router and Authentication', () => {
       method: 'POST',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'X-User-ID': 'test-user-id'
+        'X-Discord-ID': 'test-user-id',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -299,10 +297,10 @@ describe('Router and Authentication', () => {
       method: 'PUT',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'X-User-ID': 'test-user-id'
+        'X-Discord-ID': 'test-user-id',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -316,10 +314,10 @@ describe('Router and Authentication', () => {
       method: 'DELETE',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'X-User-ID': 'test-user-id'
+        'X-Discord-ID': '12345',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -333,11 +331,11 @@ describe('Router and Authentication', () => {
     const request = new IncomingRequest('http://example.com/auth/validate-admin', {
       method: 'GET',
       headers: { 
-        'X-Api-Key': 'test-api-key',
-        'X-Discord-ID': '12345'
+        'X-Api-Key': 'correct-key',
+        'X-Discord-ID': '12345',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'test-api-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
@@ -354,7 +352,7 @@ describe('Router and Authentication', () => {
       },
     });
     const ctx = createExecutionContext();
-    const response = await worker.fetch(request, env, ctx);
+    const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
     const responseBody = await response.json() as any;
     expect(response.status).toBe(405);
@@ -366,12 +364,12 @@ describe('Router and Authentication', () => {
       method: 'OPTIONS',
     });
     const ctx = createExecutionContext();
-    const response = await worker.fetch(request, env, ctx);
+    const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
     
     expect(response.status).toBe(204);
 
-    const accessControlAllowMethods = response.headers.get('Access-Control-Allow-Origin');
+    const accessControlAllowMethods = response.headers.get('Access-Control-Allow-Methods');
 
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
     expect(accessControlAllowMethods).toContain('GET');
@@ -386,10 +384,10 @@ describe('Router and Authentication', () => {
       method: 'GET',
       headers: { 
         Authorization: 'Bearer correct-key',
-        'X-User-ID': 'test-user-id'
+        'X-Discord-ID': 'test-user-id',
+        'X-Discord-Name': 'test-discord-name'
       },
     });
-    const localEnv = { ...env, API_KEY: 'correct-key' };
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);

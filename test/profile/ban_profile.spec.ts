@@ -11,7 +11,7 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 describe('PUT /profile/{id}/ban - BanProfile', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
-    'X-User-ID': 'stf_test',
+    'X-Discord-ID': '987654321',
     'X-Discord-Name': 'TestStaff',
     'Content-Type': 'application/json',
   };

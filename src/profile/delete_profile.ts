@@ -26,7 +26,7 @@ import { LogIt, LogLevel } from '../loglevel';
  */
 export async function DeleteProfile(request: Request, env: Env, userId: string, profileId: string): Promise<Response> {
     try {
-        const staffName = request.headers.get('X-Discord-Name') || undefined;
+        const userName = request.headers.get('X-Discord-Name')!;
 
         // Data extraction
         let profileData;
@@ -41,13 +41,13 @@ export async function DeleteProfile(request: Request, env: Env, userId: string, 
 
         // Basic validation
         if (!profileData) {
-            await LogIt(env.DB, LogLevel.WARNING, `Profile with ID '${profileId}' not found for deletion by user ${staffName}`, staffName);
+            await LogIt(env.DB, LogLevel.WARNING, `Profile with ID '${profileId}' not found for deletion by user ${userName}`, userName);
             return ErrorResponse('Profile not found', 404);
         }
 
         // Ban status validation
         if (profileData.is_banned === 1) {
-            await LogIt(env.DB, LogLevel.WARNING, `Banned user attempted to delete profile. Profile ID: ${profileId}, User: ${userId}`, staffName);
+            await LogIt(env.DB, LogLevel.WARNING, `Banned user attempted to delete profile. Profile ID: ${profileId}, User: ${userId}`, userName);
             return ErrorResponse('Banned users cannot delete their profile', 403);
         }
 
@@ -64,10 +64,10 @@ export async function DeleteProfile(request: Request, env: Env, userId: string, 
         // Database result handling
         if (success) {
             // Log the action
-            await LogIt(env.DB, LogLevel.INFO, `Profile with VRChat ID '${vrchatId}' deleted by user ${userId}`);
+            await LogIt(env.DB, LogLevel.INFO, `Profile with VRChat ID '${vrchatId}' deleted by user ${userId}`, userName);
             return SuccessResponse('Profile deleted successfully');
         } else {
-            await LogIt(env.DB, LogLevel.WARNING, `Failed to delete profile with VRChat ID '${vrchatId}' by user ${userId}`);
+            await LogIt(env.DB, LogLevel.WARNING, `Failed to delete profile with VRChat ID '${vrchatId}' by user ${userId}`, userName);
             return ErrorResponse('Failed to delete profile', 500);
         }
     } catch (e: unknown) {

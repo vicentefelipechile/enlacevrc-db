@@ -17,32 +17,35 @@ import { ErrorResponse } from '../responses';
  */
 export async function validateApiKey(request: Request, env: Env): Promise<boolean> {
     const apiKey = request.headers.get('X-Api-Key');
+    const authHeader = request.headers.get('Authorization');
     
-    if (!apiKey) {
+    if (!apiKey && !authHeader) {
         return false;
     }
     
-    // Compare with environment variable API key
-    return apiKey === env.API_KEY;
+    // Check X-Api-Key header
+    if (apiKey && apiKey === env.API_KEY) {
+        return true;
+    }
+    
+    // Check Authorization header (Bearer token format)
+    if (authHeader) {
+        const token = authHeader.replace('Bearer ', '');
+        return token === env.API_KEY;
+    }
+    
+    return false;
 }
 
 /**
  * Validates that a user is an authorized admin
  * Checks only the bot_admin table
- * @param userId Can be either a Discord ID or an admin_id
+ * @param userId The Discord ID of the user to validate
  */
 export async function validateAdmin(userId: string, env: Env): Promise<boolean> {
     try {
         // Check if user exists in bot_admin table by discord_id
-        const adminCheckByDiscordId = env.DB.prepare('SELECT admin_id FROM bot_admin WHERE discord_id = ? LIMIT 1').bind(userId);
-        const adminByDiscordId = await adminCheckByDiscordId.first();
-        
-        if (adminByDiscordId) {
-            return true;
-        }
-        
-        // Check if user exists in bot_admin table by admin_id
-        const adminCheckById = env.DB.prepare('SELECT admin_id FROM bot_admin WHERE admin_id = ? LIMIT 1').bind(userId);
+        const adminCheckById = env.DB.prepare('SELECT discord_id FROM bot_admin WHERE discord_id = ? LIMIT 1').bind(userId);
         const adminById = await adminCheckById.first();
         
         return adminById !== null;
@@ -53,29 +56,60 @@ export async function validateAdmin(userId: string, env: Env): Promise<boolean> 
 }
 
 /**
+ * Validates that a user is an authorized staff member
+ * Checks only the staff table
+ * @param userId The Discord ID of the user to validate
+ * @returns 
+ */
+export async function validateStaff(userId: string, env: Env): Promise<boolean> {
+    try {
+        // Check if user exists in bot_staff table by discord_id
+        const staffCheckById = env.DB.prepare('SELECT discord_id FROM staff WHERE discord_id = ? LIMIT 1').bind(userId);
+        const staffById = await staffCheckById.first();
+
+        if (staffById === null) {
+            // If not found in staff, check bot_admin table as admins are also staff
+            const adminCheckById = env.DB.prepare('SELECT discord_id FROM bot_admin WHERE discord_id = ? LIMIT 1').bind(userId);
+            const adminById = await adminCheckById.first();
+
+            return adminById !== null;
+        }
+        
+        return staffById !== null;
+    } catch (error) {
+        console.error('Error validating staff:', error);
+        return false;
+    }
+}
+
+/**
  * Combined middleware: validates API key AND admin status
  * Returns error response if validation fails
  */
-export async function requireAuth(request: Request, env: Env): Promise<Response | null> {
+export async function requireAuth(request: Request, env: Env, verifyStaff: boolean = false): Promise<Response | null> {
     // Validate API key
     const hasValidKey = await validateApiKey(request, env);
-    
     if (!hasValidKey) {
         return ErrorResponse('Unauthorized: Invalid or missing API key', 401);
     }
     
     // Extract Discord ID from request (from header or body)
     const discordId = request.headers.get('X-Discord-ID');
-    
     if (!discordId) {
         return ErrorResponse('Unauthorized: Discord ID required', 401);
     }
     
     // Validate that user is an admin/staff
-    const isAdmin = await validateAdmin(discordId, env);
-    
-    if (!isAdmin) {
-        return ErrorResponse('Forbidden: Admin privileges required', 403);
+    if (verifyStaff) {
+        const isStaff = await validateStaff(discordId, env);
+        if (!isStaff) {
+            return ErrorResponse('Forbidden: Staff privileges required', 403);
+        }
+    } else {
+        const isAdmin = await validateAdmin(discordId, env);
+        if (!isAdmin) {
+            return ErrorResponse('Forbidden: Admin privileges required', 403);
+        }
     }
     
     // All checks passed

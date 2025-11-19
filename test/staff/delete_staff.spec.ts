@@ -11,7 +11,7 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 describe('DELETE /staff/{staff_id}/delete - DeleteStaff', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
-    'X-User-ID': 'adm_test',
+    'X-Discord-ID': '10203040',
     'X-Discord-Name': 'TestStaff',
     'Content-Type': 'application/json',
   };
@@ -101,7 +101,7 @@ describe('DELETE /staff/{staff_id}/delete - DeleteStaff', () => {
   it('should return 403 for non-admin users', async () => {
     const nonAdminHeaders = {
       ...validHeaders,
-      'X-User-ID': 'regular_user',
+      'X-Discord-ID': 'regular_user',
     };
     const request = new IncomingRequest('http://example.com/staff/987654321/delete', {
       method: 'DELETE',

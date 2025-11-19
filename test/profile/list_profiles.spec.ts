@@ -11,7 +11,7 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 describe('GET /profile/list - ListProfiles', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
-    'X-User-ID': 'test-user-id',
+    'X-Discord-ID': '987654321',
     'X-Discord-Name': 'TestAdmin',
     'Content-Type': 'application/json',
   };
@@ -118,8 +118,7 @@ describe('GET /profile/list - ListProfiles', () => {
     const today = new Date();
     const startDateToday = today.toISOString().split('T')[0];
     const endDateToday = today.toISOString().split('T')[0];
-    console.error(startDateToday, endDateToday);
-    const request = new IncomingRequest(`http://example.com/profile/list`, {
+    const request = new IncomingRequest(`http://example.com/profile/list?startDate=${startDateToday}&endDate=${endDateToday}`, {
       method: 'GET',
       headers: validHeaders,
     });
@@ -131,4 +130,26 @@ describe('GET /profile/list - ListProfiles', () => {
     const body = await response.json() as any;
     expect(body).toHaveProperty('success');
   });
+
+  it('should return 403 for non-staff users', async () => {
+    const nonStaffHeaders = {
+      Authorization: 'Bearer test-api-key',
+      'X-Discord-ID': '111111111',
+      'X-Discord-Name': 'RegularUser',
+      'Content-Type': 'application/json',
+    };
+    const request = new IncomingRequest('http://example.com/profile/list', {
+      method: 'GET',
+      headers: nonStaffHeaders,
+    });
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    
+    expect(response.status).toBe(403);
+    const body = await response.json() as any;
+    expect(body).toEqual({ success: false, error: 'Forbidden: Staff privileges required' });
+  });
+
+  
 });

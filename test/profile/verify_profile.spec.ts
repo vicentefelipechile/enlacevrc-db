@@ -11,7 +11,7 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 describe('PUT /profile/{id}/verify - VerifyProfile', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
-    'X-User-ID': 'stf_test',
+    'X-Discord-ID': '987654321',
     'X-Discord-Name': 'TestStaff',
     'Content-Type': 'application/json',
   };
@@ -61,7 +61,7 @@ describe('PUT /profile/{id}/verify - VerifyProfile', () => {
       method: 'PUT',
       headers: validHeaders,
       body: JSON.stringify({
-        verified_from: 'srv_test'
+        verified_from: '123456789'
       }),
     });
     const ctx = createExecutionContext();
@@ -108,7 +108,7 @@ describe('PUT /profile/{id}/verify - VerifyProfile', () => {
     const request = new IncomingRequest('http://example.com/profile/usr_test/verify', {
       method: 'PUT',
       headers: validHeaders,
-      body: JSON.stringify({ verified_from: 'srv_test' }),
+      body: JSON.stringify({ verified_from: '123456789' }),
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -125,7 +125,7 @@ describe('PUT /profile/{id}/verify - VerifyProfile', () => {
       headers: validHeaders,
       body: JSON.stringify({ 
         verification_id: 3,
-        verified_from: 'srv_test'
+        verified_from: '123456789'
       }),
     });
     const ctx = createExecutionContext();
@@ -143,7 +143,7 @@ describe('PUT /profile/{id}/verify - VerifyProfile', () => {
       headers: validHeaders,
       body: JSON.stringify({ 
         verification_id: 3,
-        verified_from: 'srv_test'
+        verified_from: '123456789'
       }),
     });
     const ctx = createExecutionContext();
@@ -154,6 +154,24 @@ describe('PUT /profile/{id}/verify - VerifyProfile', () => {
     const body = await response.json() as any;
     expect(body).toEqual({ success: true, message: 'Profile verified successfully' });
   });
+  
+  it('should return 403 for non-staff users', async () => {
+    const nonStaffHeaders = {
+      ...validHeaders,
+      'X-Discord-ID': 'regular_user',
+    };
+    const request = new IncomingRequest('http://example.com/profile/usr_test/verify', {
+      method: 'PUT',
+      headers: nonStaffHeaders,
+    });
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    
+    expect(response.status).toBe(403);
+    const body = await response.json() as any;
+    expect(body).toEqual({ success: false, error: 'Forbidden: Staff privileges required' });
+  });
 
   it('should return 409 when trying to verify an already verified profile', async () => {
     const request = new IncomingRequest('http://example.com/profile/usr_test_verified/verify', {
@@ -161,7 +179,7 @@ describe('PUT /profile/{id}/verify - VerifyProfile', () => {
       headers: validHeaders,
       body: JSON.stringify({ 
         verification_id: 3,
-        verified_from: 'srv_test'
+        verified_from: '123456789'
       }),
     });
     const ctx = createExecutionContext();

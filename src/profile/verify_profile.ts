@@ -11,6 +11,7 @@
 import { DiscordServer, Profile } from '../models';
 import { ErrorResponse, SuccessResponse } from '../responses';
 import { LogIt, LogLevel } from '../loglevel';
+import { requireAuth } from '../middleware/auth';
 
 // =================================================================================================
 // VerifyProfile Function
@@ -20,12 +21,18 @@ import { LogIt, LogLevel } from '../loglevel';
  * @description Verifies or unverifies an existing user profile in the database.
  * @param {Request} request The incoming Request object.
  * @param {Env} env The Cloudflare Worker environment object.
- * @param {string} userId The ID of the user performing the action.
+ * @param {string} staffId The ID of the staff member performing the action.
  * @param {string} profileId The profile ID (VRChat ID or Discord ID).
  * @returns {Promise<Response>} A Response object confirming success or detailing an error.
  */
-export async function VerifyProfile(request: Request, env: Env, userId: string, profileId: string): Promise<Response> {
+export async function VerifyProfile(request: Request, env: Env, staffId: string, profileId: string): Promise<Response> {
     try {
+        // Permission verification
+        const isStaff = await requireAuth(request, env, true);
+        if (isStaff) {
+            return isStaff;
+        }
+
         // Profile
         const userName = request.headers.get('X-Discord-Name')!;
         let profile;
@@ -39,7 +46,7 @@ export async function VerifyProfile(request: Request, env: Env, userId: string, 
         }
 
         if (!profile) {
-            await LogIt(env.DB, LogLevel.WARNING, `Profile with ID '${profileId}' not found for verification action by user ${userId}`, userName);
+            await LogIt(env.DB, LogLevel.WARNING, `Profile with ID '${profileId}' not found for verification action by user ${staffId}`, userName);
             return ErrorResponse('Profile not found', 404);
         }
 
@@ -58,20 +65,6 @@ export async function VerifyProfile(request: Request, env: Env, userId: string, 
 
         if (verificationData.verified_from === undefined) {
             return ErrorResponse('Missing required field: verified_from', 400);
-        }
-
-        // Staff validation and ID resolution
-        let staffId: string = userId;
-        if (!userId.startsWith('stf_')) {
-            // Retrieve staff info
-            const staffCheckStmt = env.DB.prepare('SELECT staff_id FROM staff WHERE discord_id = ?');
-            const staffData = await staffCheckStmt.bind(userId).first<{ staff_id: string }>();
-
-            if (!staffData) {
-                return ErrorResponse('Only staff members can verify profiles', 403);
-            }
-            
-            staffId = staffData.staff_id;
         }
 
         // Handle verification logic
@@ -96,19 +89,14 @@ export async function VerifyProfile(request: Request, env: Env, userId: string, 
 
         // If verified_from is provided, validate it exists in discord_server table
         if (verifiedFrom) {
-            const serverCheck = env.DB.prepare('SELECT server_id FROM discord_server WHERE discord_server_id = ?');
+            const serverCheck = env.DB.prepare('SELECT discord_server_id FROM discord_server WHERE discord_server_id = ?');
             let serverInfo = await serverCheck.bind(verifiedFrom).first<DiscordServer>();
-            
-            if (!serverInfo) {
-                const serverByIdCheck = env.DB.prepare('SELECT server_id FROM discord_server WHERE server_id = ?');
-                serverInfo = await serverByIdCheck.bind(verifiedFrom).first<DiscordServer>();
-            }
 
             if (!serverInfo) {
                 return ErrorResponse('Invalid Discord server ID provided', 400);
             }
 
-            serverId = serverInfo.server_id;
+            serverId = serverInfo.discord_server_id;
         } else {
             return ErrorResponse('Invalid Discord server ID provided', 400);
         }
@@ -125,7 +113,7 @@ export async function VerifyProfile(request: Request, env: Env, userId: string, 
                 updated_at = CURRENT_TIMESTAMP,
                 updated_by = ?
             WHERE
-                profile_id = ?
+                discord_id = ?
         `);
         
         const result = await updateStatement.bind(
@@ -133,20 +121,20 @@ export async function VerifyProfile(request: Request, env: Env, userId: string, 
             serverId,
             staffId,
             staffId,
-            profile.profile_id
+            profile.discord_id
         ).run();
 
         if (!result.success) {
-            await LogIt(env.DB, LogLevel.ERROR, `Failed to verify profile ${profile.profile_id} by user ${userId}`, userName);
+            await LogIt(env.DB, LogLevel.ERROR, `Failed to verify profile ${profile.discord_id} by user ${staffId}`, userName);
             return ErrorResponse('Failed to verify profile', 409);
         }
 
-        await LogIt(env.DB, LogLevel.CHANGE, `Profile ${profile.profile_id} (VRChat: ${profile.vrchat_id}, Discord: ${profile.discord_id}) verified by ${userName} using method ${verificationMethod}`, userName);
+        await LogIt(env.DB, LogLevel.CHANGE, `Profile ${profile.discord_id} (VRChat: ${profile.vrchat_id}, Discord: ${profile.discord_id}) verified by ${staffId} using method ${verificationMethod}`, userName);
         return SuccessResponse('Profile verified successfully', 200);
     } catch (e: unknown) {
         const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred';
         console.error(`Error verifying/unverifying profile: ${errorMessage}`);
-        await LogIt(env.DB, LogLevel.ERROR, `Error verifying/unverifying profile by ${userId}: ${errorMessage}`);
+        await LogIt(env.DB, LogLevel.ERROR, `Error verifying/unverifying profile by ${staffId}: ${errorMessage}`);
 
         if (errorMessage.includes('JSON')) {
             return ErrorResponse('Invalid JSON in request body', 400);

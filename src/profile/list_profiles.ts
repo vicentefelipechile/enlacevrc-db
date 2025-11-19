@@ -11,6 +11,7 @@
 import { Profile } from '../models';
 import { JsonResponse, ErrorResponse } from '../responses';
 import { LogIt, LogLevel } from '../loglevel';
+import { requireAuth, validateStaff } from '../middleware/auth';
 
 // =================================================================================================
 // ListProfiles Function
@@ -25,6 +26,12 @@ import { LogIt, LogLevel } from '../loglevel';
  */
 export async function ListProfiles(request: Request, env: Env, userId: string): Promise<Response> {
     try {
+        // Permission validation
+        const isStaff = await requireAuth(request, env, true);
+        if (isStaff) {
+            return isStaff;
+        }
+
         // Extract query parameters
         const url = new URL(request.url);
         const limitParam = url.searchParams.get('limit');
@@ -40,7 +47,7 @@ export async function ListProfiles(request: Request, env: Env, userId: string): 
             FROM
                 profiles as prof
             LEFT JOIN
-                staff ON prof.verified_by = staff.staff_id
+                staff ON prof.verified_by = staff.discord_id
             WHERE
                 1=1
         `;

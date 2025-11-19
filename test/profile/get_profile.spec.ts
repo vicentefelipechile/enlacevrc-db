@@ -11,7 +11,7 @@ const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 describe('GET /profile/{id}/get - GetProfile', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
-    'X-User-ID': 'test-user-id',
+    'X-Discord-ID': 'test-user-id',
     'Content-Type': 'application/json',
   };
   const localEnv = { ...env, API_KEY: 'test-api-key' };
@@ -98,7 +98,7 @@ describe('GET /profile/{id}/get - GetProfile', () => {
   });
 
   it('should retrieve profile by Discord ID', async () => {
-    const request = new IncomingRequest('http://example.com/profile/333221/get', {
+    const request = new IncomingRequest('http://example.com/profile/11213141/get', {
       method: 'GET',
       headers: validHeaders,
     });

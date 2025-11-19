@@ -9,7 +9,7 @@
 // =================================================================================================
 
 import { LogIt, LogLevel } from '../loglevel';
-import { validateAdmin } from '../middleware/auth';
+import { requireAuth, validateAdmin } from '../middleware/auth';
 import { Staff } from '../models';
 import { ErrorResponse, SuccessResponse } from '../responses';
 
@@ -24,46 +24,37 @@ import { ErrorResponse, SuccessResponse } from '../responses';
  * @param {string} userId The Discord ID of the user performing the action.
  * @returns {Promise<Response>} A response indicating the result of the addition operation.
  */
-export async function NewStaff(request: Request, env: Env, userId: string): Promise<Response> {
+export async function NewStaff(request: Request, env: Env): Promise<Response> {
     try {
         // Admin validation
-        const isAdmin = await validateAdmin(userId, env);
-        if (!isAdmin) {
-            return ErrorResponse('Forbidden: Only admins can add staff members', 403);
+        const isAdmin = await requireAuth(request, env);
+        if (isAdmin) {
+            return isAdmin;
         }
 
         // Data extraction
         const newStaffData: Partial<Staff> = await request.json();
+        const userId = request.headers.get('X-Discord-ID')!;
+        const userName = request.headers.get('X-Discord-Name')!;
 
         // Input validation
-        if (!newStaffData.discord_id || !newStaffData.added_by) {
-            return ErrorResponse('Missing required fields: discord_id and added_by are required', 400);
+        if (!newStaffData.discord_id) {
+            return ErrorResponse('Missing required fields: discord_id', 400);
         }
-
-        // Validate foreign key
-        const adminCheck = await env.DB.prepare('SELECT 1 FROM bot_admin WHERE admin_id = ?').bind(newStaffData.added_by).first();
-        if (!adminCheck) return ErrorResponse('Invalid added_by: bot admin does not exist', 400);
-
-        // Generate new staff ID
-        const staffId = `stf_${crypto.randomUUID()}`;
 
         // Variable extraction
         const {
             discord_id: discordId,
             discord_name: discordName,
-            added_by: addedBy
         } = newStaffData;
 
         // Statement preparation and execution
-        const statement = env.DB.prepare('INSERT INTO staff (staff_id, discord_id, discord_name, added_by) VALUES (?, ?, ?, ?)');
-        const { success } = await statement.bind(staffId, discordId, discordName, addedBy).run();
+        const statement = env.DB.prepare('INSERT INTO staff (discord_id, discord_name, added_by) VALUES (?, ?, ?)');
+        const { success } = await statement.bind(discordId, discordName, userId).run();
 
         // Database result handling
         if (success) {
-            // Log the action
-            const userName = request.headers.get('X-Discord-Name')!;
-            await LogIt(env.DB, LogLevel.ADDITION, `New staff member added: ${discordId} by ${addedBy}`, userName);
-
+            await LogIt(env.DB, LogLevel.ADDITION, `New staff member added: ${discordId} by ${userId}`, userName);
             return SuccessResponse('Staff member added successfully', 201);
         } else {
             return ErrorResponse('Failed to add staff member. It may already exist', 409);

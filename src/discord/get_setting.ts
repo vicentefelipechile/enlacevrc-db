@@ -35,10 +35,8 @@ export async function GetSetting(request: Request, env: Env, discordServerId: st
         const url = new URL(request.url);
 
         // Find the generated server_id
-        const server = await env.DB.prepare('SELECT server_id FROM discord_server WHERE discord_server_id = ?').bind(discordServerId).first() as { server_id: string } | null;
-        if (!server) {
-            return ErrorResponse('Discord server not found', 404);
-        }
+        const server = await env.DB.prepare('SELECT 1 FROM discord_server WHERE discord_server_id = ?').bind(discordServerId).first() as { server_id: string } | null;
+        if (!server) return ErrorResponse('Discord server not found', 404);
 
         // All settings retrieval
         const getAllSettings = url.searchParams.get('getallsettings');
