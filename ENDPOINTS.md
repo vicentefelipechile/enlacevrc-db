@@ -1,3 +1,8 @@
+HEADERS:
+X-Api-Key: Private Key
+X-Discord-ID: Discord User ID
+X-Discord-Name: Discord Username
+
 POST   /profile/new                     - Crear perfil
 GET    /profile/list                    - Listar perfiles
 GET    /profile/{ID}/get                - Obtener perfil
