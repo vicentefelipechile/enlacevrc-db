@@ -15,6 +15,7 @@ INSERT INTO profiles (
     is_verified,        <= TRUE
     verification_id,    <= 1
     verified_at,        <= added_at
+    verified_from,      <= '1392882468704489552'
     verified_by         <= '356253258613915663'
 )
 """
@@ -26,6 +27,7 @@ from datetime import datetime
 INPUT_FILE = 'data.tsv'
 OUTPUT_FILE = 'poblate-prod.sql'
 ADMIN_ID = '356253258613915663'
+GROUP_ID = '1392882468704489552'
 
 def escape_sql_string(value):
     """Escape single quotes for SQL"""
@@ -56,7 +58,7 @@ def convert_tsv_to_sql():
                         continue
                     
                     # Build VALUES row
-                    values_row = f"""({escape_sql_string(discord_id)}, {escape_sql_string(vrchat_id)}, {escape_sql_string(vrchat_name)}, {escape_sql_string(added_at)}, CURRENT_TIMESTAMP, {escape_sql_string(discord_id)}, {escape_sql_string(ADMIN_ID)}, TRUE, 1, {escape_sql_string(added_at)}, {escape_sql_string(356253258613915663)})"""
+                    values_row = f"""({escape_sql_string(discord_id)}, {escape_sql_string(vrchat_id)}, {escape_sql_string(vrchat_name)}, {escape_sql_string(added_at)}, CURRENT_TIMESTAMP, {escape_sql_string(discord_id)}, {escape_sql_string(ADMIN_ID)}, TRUE, 1, {escape_sql_string(added_at)}, {escape_sql_string(GROUP_ID)}, {escape_sql_string(ADMIN_ID)})"""
                     
                     values_rows.append(values_row)
                     
@@ -78,6 +80,7 @@ def convert_tsv_to_sql():
     is_verified,
     verification_id,
     verified_at,
+    verified_from,
     verified_by
 ) VALUES
 """)
