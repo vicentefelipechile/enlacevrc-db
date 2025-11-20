@@ -65,7 +65,8 @@ INSERT INTO log (log_level_id, log_message) VALUES
     (2, 'Added initial bot admin and staff member');
 
 INSERT INTO discord_server (discord_server_id, server_name, added_by) VALUES
-    ('web', 'Admin Web Panel', '356253258613915663');
+    ('web', 'Admin Web Panel', '356253258613915663'),
+    ('1392882468704489552', 'El Refugio Nocturno', '356253258613915663');
 
 INSERT INTO log (log_level_id, log_message) VALUES
     (2, 'Added initial Discord server for Admin Web Panel');
