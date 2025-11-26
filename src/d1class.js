@@ -441,6 +441,28 @@ class D1Class {
     // =================================================================================================
 
     /**
+     * Agrega un nuevo servidor de Discord y puebla automáticamente todas las configuraciones existentes
+     * @param {Object} userRequestData - Datos del usuario que realiza la petición
+     * @param {string} userRequestData.discord_id - Discord ID del usuario
+     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {string} discordServerId - ID del servidor de Discord a agregar
+     * @param {string} serverName - Nombre del servidor de Discord
+     * @returns {Promise<Object>} Respuesta del servidor con información de configuraciones añadidas
+     */
+    static async addDiscordServer(userRequestData, discordServerId, serverName) {
+        const response = await D1Class._request('/discord/add-server', userRequestData, {
+            method: 'POST',
+            body: JSON.stringify({
+                discord_server_id: discordServerId,
+                server_name: serverName
+            })
+        });
+
+        D1Class._invalidateCache(`discord:${discordServerId}`);
+        return response;
+    }
+
+    /**
      * Crea una nueva configuración de Discord
      * @param {Object} userRequestData - Datos del usuario que realiza la petición
      * @param {string} userRequestData.discord_id - Discord ID del usuario
