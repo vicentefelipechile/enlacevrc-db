@@ -15,6 +15,7 @@ import { ListSettings } from './list_settings';
 import { DeleteSetting } from './delete_setting';
 import { UpdateSetting } from './update_setting';
 import { ServerExists } from './exists';
+import { AddServer } from './add_server';
 
 // =================================================================================================
 // DiscordHandler Function
@@ -30,6 +31,14 @@ import { ServerExists } from './exists';
  * @returns {Promise<Response>} The Response from the executed handler.
  */
 export async function DiscordHandler(request: Request, env: Env, userId: string, serverId: string | undefined, action: string | undefined): Promise<Response> {
+    // Handle special case for adding a new server (no serverId needed)
+    if (serverId === 'add-server') {
+        if (request.method !== 'POST') {
+            return ErrorResponse(`Method ${request.method} not allowed for /discord/add-server`, 405);
+        }
+        return AddServer(request, env, userId);
+    }
+
     // Require both serverId and action for all operations
     if (!serverId || !action) {
         return ErrorResponse('Invalid discord endpoint', 400);

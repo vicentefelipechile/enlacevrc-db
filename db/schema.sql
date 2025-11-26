@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS setting_type (
 CREATE TABLE IF NOT EXISTS setting (
     setting_name        TEXT PRIMARY KEY,
     setting_type_name   TEXT NOT NULL,
+    default_value       TEXT NOT NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by          TEXT DEFAULT 'system',
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -97,7 +98,7 @@ CREATE TABLE IF NOT EXISTS discord_settings (
     discord_setting_id  INTEGER PRIMARY KEY AUTOINCREMENT,
     discord_server_id   TEXT NOT NULL,
     setting_key         TEXT NOT NULL,
-    setting_value       TEXT NOT NULL,
+    setting_value       TEXT,
 
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -2,22 +2,32 @@ INSERT INTO bot_admin (discord_id, added_by) VALUES ('10203040', 'vicentefelipec
 INSERT INTO staff (discord_id, discord_name, added_by) VALUES ('987654321', 'TestStaff', '10203040');
 INSERT INTO discord_server (discord_server_id, server_name, added_by) VALUES ('123456789', 'TestServer', '10203040');
 
-INSERT INTO setting (setting_name, setting_type_name, created_by) VALUES (
+INSERT INTO setting (setting_name, setting_type_name, created_by, default_value) VALUES (
     'prefix',
     'string',
-    '10203040'
+    '10203040',
+    '!'
 );
 
-INSERT INTO setting (setting_name, setting_type_name, created_by) VALUES (
+INSERT INTO setting (setting_name, setting_type_name, created_by, default_value) VALUES (
     'welcome_message',
     'string',
-    '10203040'
+    '10203040',
+    'Welcome to the server!'
 );
 
-INSERT INTO setting (setting_name, setting_type_name, created_by) VALUES (
+INSERT INTO setting (setting_name, setting_type_name, created_by, default_value) VALUES (
     'notification_channel',
     'string',
-    '10203040'
+    '10203040',
+    ''
+);
+
+INSERT INTO setting (setting_name, setting_type_name, created_by, default_value) VALUES (
+    'verification_role',
+    'string',
+    '10203040',
+    ''
 );
 
 INSERT INTO discord_settings (discord_server_id, setting_key, setting_value) VALUES (

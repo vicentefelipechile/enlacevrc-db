@@ -34,11 +34,11 @@ INSERT INTO log (log_level_id, log_message) VALUES
     (2, 'Added "boolean" type to setting_type table'),
     (2, 'Added "string" type to setting_type table');
 
-INSERT INTO setting (setting_name, setting_type_name) VALUES
-    ('verification_role', 'boolean'),
-    ('verification_plus_role', 'string'),
-    ('verification_channel', 'string'),
-    ('auto_nickname', 'boolean');
+INSERT INTO setting (setting_name, setting_type_name, default_value) VALUES
+    ('verification_role', 'boolean', '0'),
+    ('verification_plus_role', 'string', ''),
+    ('verification_channel', 'string', ''),
+    ('auto_nickname', 'boolean', '0');
 
 INSERT INTO log (log_level_id, log_message) VALUES
     (2, 'Added "verification_role" with type "boolean" to setting table'),

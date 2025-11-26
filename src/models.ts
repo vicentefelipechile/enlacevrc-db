@@ -45,6 +45,7 @@ export interface Setting {
     setting_id: number;
     setting_name: string;
     setting_type_id: number;
+    default_value: string;
     created_at: Date;
     created_by: string;
     updated_at: Date;
