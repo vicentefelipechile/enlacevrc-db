@@ -102,6 +102,7 @@ describe('GET /discord/list-servers - ListServers', () => {
     
     expect(response.status).toBe(200);
     const body = await response.json() as any;
+    console.log(body)
     expect(body.success).toBe(true);
     expect(Array.isArray(body.data)).toBe(true);
     expect(body.data.length).toBeGreaterThan(0);

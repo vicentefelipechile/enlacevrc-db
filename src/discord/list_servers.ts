@@ -40,7 +40,7 @@ export async function ListServers(request: Request, env: Env): Promise<Response>
         }
 
         // Format the response data
-        const servers = result.results.map((server: { discord_server_id: string; server_name: string }) => ({
+        const servers = result.results.map((server) => ({
             discord_server_id: server.discord_server_id,
             discord_server_name: server.server_name
         }));
