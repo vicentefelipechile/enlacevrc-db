@@ -43,16 +43,14 @@ export async function AddServer(request: Request, env: Env, userId: string): Pro
         // Check if server already exists
         const existingServer = await env.DB.prepare(
             'SELECT discord_server_id FROM discord_server WHERE discord_server_id = ?'
-        ).bind(discordServerId).first<{ discord_server_id: string } | null>();
+        ).bind(discordServerId).first() as { discord_server_id: string } | null;
 
         if (existingServer) {
             return ErrorResponse('Discord server already exists', 409);
         }
 
         // Statement preparation for adding the server
-        const addServerStatement = env.DB.prepare(
-            'INSERT INTO discord_server (discord_server_id, server_name, added_by) VALUES (?, ?, ?)'
-        );
+        const addServerStatement = env.DB.prepare('INSERT INTO discord_server (discord_server_id, server_name, added_by) VALUES (?, ?, ?)');
         const { success: serverInsertSuccess } = await addServerStatement.bind(discordServerId, serverName, userId).run();
 
         if (!serverInsertSuccess) {
@@ -60,9 +58,7 @@ export async function AddServer(request: Request, env: Env, userId: string): Pro
         }
 
         // Retrieve all settings from the database
-        const settings = await env.DB.prepare(
-            'SELECT setting_name, default_value FROM setting WHERE is_disabled = 0'
-        ).all<Setting>();
+        const settings = await env.DB.prepare('SELECT setting_name, default_value FROM setting WHERE is_disabled = 0').all<Setting>();
 
         if (!settings.results || settings.results.length === 0) {
             // Server added but no settings to populate
@@ -123,7 +119,7 @@ export async function AddServer(request: Request, env: Env, userId: string): Pro
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-        console.error(`Error adding Discord server: ${errorMessage}`);
+        await LogIt(env.DB, LogLevel.ERROR, `Error adding Discord server: ${errorMessage}`, userId);
 
         return ErrorResponse('Internal Server Error', 500);
     }

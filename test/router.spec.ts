@@ -186,8 +186,8 @@ describe('Router and Authentication', () => {
     expect(responseBody).toEqual({ success: false, error: 'Unknown action' });
   });
 
-  it('should return 405 for wrong method on /discord/{id}/exists', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/exists', {
+  it('should return 405 for wrong method on /discord/{id}/exists-server', async () => {
+    const request = new IncomingRequest('http://example.com/discord/123456789/exists-server', {
       method: 'POST',
       headers: { 
         Authorization: 'Bearer correct-key',
@@ -200,7 +200,7 @@ describe('Router and Authentication', () => {
     await waitOnExecutionContext(ctx);
     const responseBody = await response.json() as any;
     expect(response.status).toBe(405);
-    expect(responseBody).toEqual({ success: false, error: 'Method POST not allowed for /discord/123456789/exists' });
+    expect(responseBody).toEqual({ success: false, error: 'Method POST not allowed for /discord/123456789/exists-server' });
   });
 
   // Staff Route Tests

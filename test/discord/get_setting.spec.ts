@@ -8,7 +8,7 @@ import test from '../../db/test.sql?raw';
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
-describe('GET /discord/{server_id}/get - GetSetting', () => {
+describe('GET /discord/{server_id}/get-setting - GetSetting', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
     'X-Discord-ID': '987654321',
@@ -57,7 +57,7 @@ describe('GET /discord/{server_id}/get - GetSetting', () => {
   });
 
   it('should return 405 for non-GET methods', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/get', {
+    const request = new IncomingRequest('http://example.com/discord/123456789/get-setting', {
       method: 'POST',
       headers: validHeaders,
     });
@@ -67,11 +67,11 @@ describe('GET /discord/{server_id}/get - GetSetting', () => {
     
     expect(response.status).toBe(405);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: false, error: 'Method POST not allowed for /discord/123456789/get' });
+    expect(body).toEqual({ success: false, error: 'Method POST not allowed for /discord/123456789/get-setting' });
   });
 
   it('should return 400 when missing setting_key and getallsettings is not true', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/get', {
+    const request = new IncomingRequest('http://example.com/discord/123456789/get-setting', {
       method: 'GET',
       headers: validHeaders,
     });
@@ -85,7 +85,7 @@ describe('GET /discord/{server_id}/get - GetSetting', () => {
   });
 
   it('should return 404 for non-existent server', async () => {
-    const request = new IncomingRequest('http://example.com/discord/999999999/get?setting_key=prefix', {
+    const request = new IncomingRequest('http://example.com/discord/999999999/get-setting?setting_key=prefix', {
       method: 'GET',
       headers: validHeaders,
     });
@@ -99,7 +99,7 @@ describe('GET /discord/{server_id}/get - GetSetting', () => {
   });
 
   it('should get setting successfully with setting_key', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/get?setting_key=prefix', {
+    const request = new IncomingRequest('http://example.com/discord/123456789/get-setting?setting_key=prefix', {
       method: 'GET',
       headers: validHeaders,
     });
@@ -113,7 +113,7 @@ describe('GET /discord/{server_id}/get - GetSetting', () => {
   });
 
   it('should get all settings with getallsettings=true', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/get?getallsettings=true', {
+    const request = new IncomingRequest('http://example.com/discord/123456789/get-setting?getallsettings=true', {
       method: 'GET',
       headers: validHeaders,
     });

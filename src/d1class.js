@@ -463,29 +463,6 @@ class D1Class {
     }
 
     /**
-     * Crea una nueva configuración de Discord
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
-     * @param {string} serverId - ID del servidor de Discord
-     * @param {string} settingKey - Clave de la configuración
-     * @param {string} settingValue - Valor de la configuración
-     * @returns {Promise<Object>} Respuesta del servidor
-     */
-    static async createDiscordSetting(userRequestData, serverId, settingKey, settingValue) {
-        const response = await D1Class._request(`/discord/${serverId}/new`, userRequestData, {
-            method: 'POST',
-            body: JSON.stringify({
-                setting_key: settingKey,
-                setting_value: settingValue
-            })
-        });
-
-        D1Class._invalidateCache(`discord:${serverId}`);
-        return response;
-    }
-
-    /**
      * Obtiene una configuración específica de Discord
      * @param {Object} userRequestData - Datos del usuario que realiza la petición
      * @param {string} userRequestData.discord_id - Discord ID del usuario
@@ -505,7 +482,7 @@ class D1Class {
         return D1Class._getCached(
             cacheKey,
             async () => {
-                const response = await D1Class._request(`/discord/${serverId}/get?setting_key=${settingKey}`, userRequestData);
+                const response = await D1Class._request(`/discord/${serverId}/get-setting?setting_key=${settingKey}`, userRequestData);
                 return response.data[settingKey];
             },
             D1Class.ttls.discordConfig
@@ -531,7 +508,7 @@ class D1Class {
         return D1Class._getCached(
             cacheKey,
             async () => {
-                const response = await D1Class._request(`/discord/${serverId}/get?getallsettings=true`, userRequestData);
+                const response = await D1Class._request(`/discord/${serverId}/get-setting?getallsettings=true`, userRequestData);
                 return response.data;
             },
             D1Class.ttls.discordConfig
@@ -545,8 +522,8 @@ class D1Class {
      * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
      * @returns {Promise<Array>} Lista de configuraciones
      */
-    static async listDiscordSettings(userRequestData) {
-        const response = await D1Class._request('/discord/list', userRequestData);
+    static async listDiscordSettings(userRequestData, serverId) {
+        const response = await D1Class._request(`/discord/${serverId}/list-settings`, userRequestData);
         return response.data;
     }
 
@@ -561,31 +538,12 @@ class D1Class {
      * @returns {Promise<Object>} Respuesta del servidor
      */
     static async updateDiscordSetting(userRequestData, serverId, settingKey, settingValue) {
-        const response = await D1Class._request(`/discord/${serverId}/update`, userRequestData, {
+        const response = await D1Class._request(`/discord/${serverId}/update-setting`, userRequestData, {
             method: 'PUT',
             body: JSON.stringify({
                 setting_key: settingKey,
                 setting_value: settingValue
             })
-        });
-
-        D1Class._invalidateCache(`discord:${serverId}`);
-        return response;
-    }
-
-    /**
-     * Elimina una configuración de Discord
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
-     * @param {string} serverId - ID del servidor de Discord
-     * @param {string} settingKey - Clave de la configuración a eliminar
-     * @returns {Promise<Object>} Respuesta del servidor
-     */
-    static async deleteDiscordSetting(userRequestData, serverId, settingKey) {
-        const response = await D1Class._request(`/discord/${serverId}/delete`, userRequestData, {
-            method: 'DELETE',
-            body: JSON.stringify({ setting_key: settingKey })
         });
 
         D1Class._invalidateCache(`discord:${serverId}`);
@@ -601,8 +559,37 @@ class D1Class {
      * @returns {Promise<boolean>} True si el servidor existe
      */
     static async discordServerExists(userRequestData, serverId) {
-        const response = await D1Class._request(`/discord/${serverId}/exists`, userRequestData);
+        const response = await D1Class._request(`/discord/${serverId}/exists-server`, userRequestData);
         return response.data.exists;
+    }
+
+    /**
+     * Lista todos los servidores de Discord
+     * @param {Object} userRequestData - Datos del usuario que realiza la petición
+     * @param {string} userRequestData.discord_id - Discord ID del usuario
+     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @returns {Promise<Array>} Array de servidores con discord_server_id y discord_server_name
+     */
+    static async listDiscordServers(userRequestData) {
+        const response = await D1Class._request('/discord/list-servers', userRequestData);
+        return response.data;
+    }
+
+    /**
+     * Elimina un servidor de Discord y todas sus configuraciones
+     * @param {Object} userRequestData - Datos del usuario que realiza la petición
+     * @param {string} userRequestData.discord_id - Discord ID del usuario
+     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {string} serverId - ID del servidor de Discord a eliminar
+     * @returns {Promise<Object>} Respuesta del servidor
+     */
+    static async deleteDiscordServer(userRequestData, serverId) {
+        const response = await D1Class._request(`/discord/${serverId}/delete-server`, userRequestData, {
+            method: 'DELETE'
+        });
+
+        D1Class._invalidateCache(`discord:${serverId}`);
+        return response;
     }
 
     // =================================================================================================

@@ -8,7 +8,7 @@ import test from '../../db/test.sql?raw';
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
-describe('GET /discord/{SERVER_ID}/list - ListSettings', () => {
+describe('GET /discord/{SERVER_ID}/list-settings - ListSettings', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
     'X-Discord-ID': '987654321',
@@ -57,7 +57,7 @@ describe('GET /discord/{SERVER_ID}/list - ListSettings', () => {
   });
 
   it('should return 405 for non-GET methods', async () => {
-    const request = new IncomingRequest('http://example.com/discord/1234567890/list', {
+    const request = new IncomingRequest('http://example.com/discord/1234567890/list-settings', {
       method: 'POST',
       headers: validHeaders,
     });
@@ -67,11 +67,11 @@ describe('GET /discord/{SERVER_ID}/list - ListSettings', () => {
     
     expect(response.status).toBe(405);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: false, error: 'Method POST not allowed for /discord/1234567890/list' });
+    expect(body).toEqual({ success: false, error: 'Method POST not allowed for /discord/1234567890/list-settings' });
   });
 
   it('should list all settings for a specific server', async () => {
-    const request = new IncomingRequest('http://example.com/discord/1234567890/list', {
+    const request = new IncomingRequest('http://example.com/discord/1234567890/list-settings', {
       method: 'GET',
       headers: validHeaders,
     });
@@ -89,7 +89,7 @@ describe('GET /discord/{SERVER_ID}/list - ListSettings', () => {
   });
 
   it('should list settings with limit parameter', async () => {
-    const request = new IncomingRequest('http://example.com/discord/1234567890/list?limit=5', {
+    const request = new IncomingRequest('http://example.com/discord/1234567890/list-settings?limit=5', {
       method: 'GET',
       headers: validHeaders,
     });
@@ -103,7 +103,7 @@ describe('GET /discord/{SERVER_ID}/list - ListSettings', () => {
   });
 
   it('should list settings with date filters', async () => {
-    const request = new IncomingRequest('http://example.com/discord/1234567890/list?start_date=2024-01-01&end_date=2024-12-31', {
+    const request = new IncomingRequest('http://example.com/discord/1234567890/list-settings?start_date=2024-01-01&end_date=2024-12-31', {
       method: 'GET',
       headers: validHeaders,
     });

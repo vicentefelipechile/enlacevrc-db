@@ -8,7 +8,7 @@ import test from '../../db/test.sql?raw';
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
-describe('PUT /discord/{server_id}/update - UpdateSetting', () => {
+describe('PUT /discord/{server_id}/update-setting - UpdateSetting', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
     'X-Discord-ID': '987654321',
@@ -57,7 +57,7 @@ describe('PUT /discord/{server_id}/update - UpdateSetting', () => {
   });
 
   it('should return 405 for non-PUT methods', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/update', {
+    const request = new IncomingRequest('http://example.com/discord/123456789/update-setting', {
       method: 'GET',
       headers: validHeaders,
     });
@@ -67,11 +67,11 @@ describe('PUT /discord/{server_id}/update - UpdateSetting', () => {
     
     expect(response.status).toBe(405);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: false, error: 'Method GET not allowed for /discord/123456789/update' });
+    expect(body).toEqual({ success: false, error: 'Method GET not allowed for /discord/123456789/update-setting' });
   });
 
   it('should return 400 when missing required fields', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/update', {
+    const request = new IncomingRequest('http://example.com/discord/123456789/update-setting', {
       method: 'PUT',
       headers: validHeaders,
       body: JSON.stringify({}),
@@ -86,7 +86,7 @@ describe('PUT /discord/{server_id}/update - UpdateSetting', () => {
   });
 
   it('should return 400 for invalid discord_server_id', async () => {
-    const request = new IncomingRequest('http://example.com/discord/999999999/update', {
+    const request = new IncomingRequest('http://example.com/discord/999999999/update-setting', {
       method: 'PUT',
       headers: validHeaders,
       body: JSON.stringify({ 
@@ -104,7 +104,7 @@ describe('PUT /discord/{server_id}/update - UpdateSetting', () => {
   });
 
   it('should return 400 for invalid setting_key', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/update', {
+    const request = new IncomingRequest('http://example.com/discord/123456789/update-setting', {
       method: 'PUT',
       headers: validHeaders,
       body: JSON.stringify({ 
@@ -122,7 +122,7 @@ describe('PUT /discord/{server_id}/update - UpdateSetting', () => {
   });
 
   it('should update setting successfully', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/update', {
+    const request = new IncomingRequest('http://example.com/discord/123456789/update-setting', {
       method: 'PUT',
       headers: validHeaders,
       body: JSON.stringify({ 

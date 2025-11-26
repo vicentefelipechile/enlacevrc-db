@@ -8,7 +8,7 @@ import test from '../../db/test.sql?raw';
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
-describe('DELETE /discord/{server_id}/delete - DeleteSetting', () => {
+describe('GET /discord/{server_id}/exists - ServerExists', () => {
   const validHeaders = {
     Authorization: 'Bearer test-api-key',
     'X-Discord-ID': '987654321',
@@ -56,9 +56,9 @@ describe('DELETE /discord/{server_id}/delete - DeleteSetting', () => {
     await localEnv.DB.batch(statements);
   });
 
-  it('should return 405 for non-DELETE methods', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/delete', {
-      method: 'GET',
+  it('should return 405 for non-GET methods', async () => {
+    const request = new IncomingRequest('http://example.com/discord/123456789/exists-server', {
+      method: 'POST',
       headers: validHeaders,
     });
     const ctx = createExecutionContext();
@@ -67,65 +67,13 @@ describe('DELETE /discord/{server_id}/delete - DeleteSetting', () => {
     
     expect(response.status).toBe(405);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: false, error: 'Method GET not allowed for /discord/123456789/delete' });
+    expect(body).toEqual({ success: false, error: 'Method POST not allowed for /discord/123456789/exists-server' });
   });
 
-  it('should return 400 when missing required field', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/delete', {
-      method: 'DELETE',
+  it('should check if server exists', async () => {
+    const request = new IncomingRequest('http://example.com/discord/123456789/exists-server', {
+      method: 'GET',
       headers: validHeaders,
-      body: JSON.stringify({}),
-    });
-    const ctx = createExecutionContext();
-    const response = await worker.fetch(request, localEnv, ctx);
-    await waitOnExecutionContext(ctx);
-    
-    expect(response.status).toBe(400);
-    const body = await response.json() as any;
-    expect(body).toEqual({ success: false, error: 'Missing required field: setting_key is required' });
-  });
-
-  it('should return 400 for invalid discord_server_id', async () => {
-    const request = new IncomingRequest('http://example.com/discord/999999999/delete', {
-      method: 'DELETE',
-      headers: validHeaders,
-      body: JSON.stringify({ 
-        setting_key: 'prefix'
-      }),
-    });
-    const ctx = createExecutionContext();
-    const response = await worker.fetch(request, localEnv, ctx);
-    await waitOnExecutionContext(ctx);
-    
-    expect(response.status).toBe(400);
-    const body = await response.json() as any;
-    expect(body).toEqual({ success: false, error: 'Invalid discord_server_id: server does not exist' });
-  });
-
-  it('should return 404 for non-existent setting', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/delete', {
-      method: 'DELETE',
-      headers: validHeaders,
-      body: JSON.stringify({ 
-        setting_key: 'non_existent_setting'
-      }),
-    });
-    const ctx = createExecutionContext();
-    const response = await worker.fetch(request, localEnv, ctx);
-    await waitOnExecutionContext(ctx);
-    
-    expect(response.status).toBe(404);
-    const body = await response.json() as any;
-    expect(body).toEqual({ success: false, error: 'Setting not found for the specified server' });
-  });
-
-  it('should delete setting successfully', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/delete', {
-      method: 'DELETE',
-      headers: validHeaders,
-      body: JSON.stringify({ 
-        setting_key: 'prefix'
-      }),
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -133,6 +81,20 @@ describe('DELETE /discord/{server_id}/delete - DeleteSetting', () => {
     
     expect(response.status).toBe(200);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: true, message: 'Setting deleted successfully' });
+    expect(body).toEqual({ success: true, data: { exists: true } });
+  });
+
+  it('should return false for non-existent server', async () => {
+    const request = new IncomingRequest('http://example.com/discord/999999999/exists-server', {
+      method: 'GET',
+      headers: validHeaders,
+    });
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+    
+    expect(response.status).toBe(200);
+    const body = await response.json() as any;
+    expect(body).toEqual({ success: true, data: { exists: false } });
   });
 });
