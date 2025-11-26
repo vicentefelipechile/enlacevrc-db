@@ -24,9 +24,15 @@ import { ErrorResponse, JsonResponse } from '../responses';
 export async function ListServers(request: Request, env: Env): Promise<Response> {
     try {
         // Statement preparation
-        const statement = env.DB.prepare(
-            'SELECT discord_server_id, server_name FROM discord_server ORDER BY added_at DESC'
-        );
+        const statement = env.DB.prepare(`
+            SELECT
+                discord_server_id, server_name
+            FROM
+                discord_server 
+            WHERE
+                discord_server_id != 'web' 
+            ORDER BY added_at DESC
+        `);
 
         // Statement execution
         const result = await statement.all() as { results: DiscordServer[] };
