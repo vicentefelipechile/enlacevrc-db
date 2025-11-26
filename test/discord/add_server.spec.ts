@@ -253,7 +253,7 @@ describe('POST /discord/add-server - AddServer', () => {
     });
   });
 
-  it('should create 4 settings for new server (verification_role, verification_plus_role, verification_channel, auto_nickname)', async () => {
+  it('should create 4 settings for new server', async () => {
     const request = new IncomingRequest('http://example.com/discord/add-server', {
       method: 'POST',
       headers: validHeaders,
