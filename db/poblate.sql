@@ -71,5 +71,14 @@ INSERT INTO discord_server (discord_server_id, server_name, added_by) VALUES
 INSERT INTO log (log_level_id, log_message) VALUES
     (2, 'Added initial Discord server for Admin Web Panel');
 
+INSERT INTO discord_settings (discord_server_id, setting_name, setting_value, added_by) VALUES
+    ('1392882468704489552', 'verification_role', '1392884338429005914', '356253258613915663'),
+    ('1392882468704489552', 'verification_plus_role', '1392884336889434203', '356253258613915663'),
+    ('1392882468704489552', 'verification_channel', '', '356253258613915663'),
+    ('1392882468704489552', 'auto_nickname', '1', '356253258613915663');
+
+INSERT INTO log (log_level_id, log_message) VALUES
+    (2, 'Added default settings for Discord server El Refugio Nocturno');
+
 INSERT INTO log (log_level_id, log_message) VALUES
     (1, 'Database population script completed successfully');
