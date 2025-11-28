@@ -16,6 +16,7 @@ import { ServerExists } from './exists_server';
 import { AddServer } from './add_server';
 import { ListServers } from './list_servers';
 import { DeleteServer } from './delete_server';
+import { NewSetting } from './new_settings';
 
 // =================================================================================================
 // DiscordHandler Function
@@ -47,6 +48,12 @@ export async function DiscordHandler(request: Request, env: Env, userId: string,
                     return ErrorResponse(`Method ${request.method} not allowed for /discord/add-server`, 405);
                 }
                 return AddServer(request, env, userId);
+
+            case 'new-setting':
+                if (request.method !== 'POST') {
+                    return ErrorResponse(`Method ${request.method} not allowed for /discord/new-setting`, 405);
+                }
+                return NewSetting(request, env);
         }
     }
 
@@ -62,37 +69,37 @@ export async function DiscordHandler(request: Request, env: Env, userId: string,
                 return ErrorResponse(`Method ${request.method} not allowed for /discord/${serverId}/add-server`, 405);
             }
             return AddServer(request, env, serverId);
-        
+
         case 'get-setting':
             if (request.method !== 'GET') {
                 return ErrorResponse(`Method ${request.method} not allowed for /discord/${serverId}/get-setting`, 405);
             }
             return GetSetting(request, env, serverId);
-        
+
         case 'list-settings':
             if (request.method !== 'GET') {
                 return ErrorResponse(`Method ${request.method} not allowed for /discord/${serverId}/list-settings`, 405);
             }
             return ListSettings(request, env, userId, serverId);
-        
+
         case 'update-setting':
             if (request.method !== 'PUT') {
                 return ErrorResponse(`Method ${request.method} not allowed for /discord/${serverId}/update-setting`, 405);
             }
             return UpdateSetting(request, env, serverId);
-        
+
         case 'delete-server':
             if (request.method !== 'DELETE') {
                 return ErrorResponse(`Method ${request.method} not allowed for /discord/${serverId}/delete-server`, 405);
             }
             return DeleteServer(request, env, serverId, userId);
-        
+
         case 'exists-server':
             if (request.method !== 'GET') {
                 return ErrorResponse(`Method ${request.method} not allowed for /discord/${serverId}/exists-server`, 405);
             }
             return ServerExists(request, env, serverId);
-        
+
         default:
             return ErrorResponse('Unknown action', 404);
     }

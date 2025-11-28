@@ -147,3 +147,9 @@ export interface DiscordSetting {
     updated_at: Date;
     updated_by: string;
 }
+
+export interface NewDiscordSetting {
+    name: string;
+    type: string;
+    default_value: string;
+}
