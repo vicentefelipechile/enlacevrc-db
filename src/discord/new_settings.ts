@@ -26,7 +26,7 @@ export async function NewSetting(request: Request, env: Env): Promise<Response> 
         }
 
         // 1. Check if the setting already exists
-        const existingSetting = await env.DB.prepare('SELECT setting_name FROM setting WHERE setting_key = ?').bind(settingName).first();
+        const existingSetting = await env.DB.prepare('SELECT setting_name FROM setting WHERE setting_name = ?').bind(settingName).first();
 
         if (existingSetting) {
             return ErrorResponse(`Setting '${settingName}' already exists`, 409);
