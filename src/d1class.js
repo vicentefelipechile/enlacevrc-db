@@ -551,6 +551,30 @@ class D1Class {
     }
 
     /**
+     * Crea una nueva configuración de Discord
+     * @param {Object} userRequestData - Datos del usuario que realiza la petición
+     * @param {string} userRequestData.discord_id - Discord ID del usuario
+     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {string} settingKey - Clave de la configuración
+     * @param {string} settingType - Tipo de la configuración
+     * @param {string} defaultValue - Valor por defecto de la configuración
+     * @returns {Promise<Object>} Respuesta del servidor
+     */
+    static async newDiscordSetting(userRequestData, settingKey, settingType, defaultValue) {
+        const response = await D1Class._request(`/discord/new-setting`, userRequestData, {
+            method: 'POST',
+            body: JSON.stringify({
+                setting_key: settingKey,
+                setting_type: settingType,
+                default_value: defaultValue
+            })
+        });
+
+        D1Class._invalidateCache(`discord:${serverId}`);
+        return response;
+    }
+
+    /**
      * Verifica si un servidor de Discord existe
      * @param {Object} userRequestData - Datos del usuario que realiza la petición
      * @param {string} userRequestData.discord_id - Discord ID del usuario

@@ -73,7 +73,7 @@ describe('POST /discord/new-setting - NewSetting', () => {
             method: 'POST',
             headers: validHeaders,
             body: JSON.stringify({
-                name: 'incomplete_setting'
+                setting_key: 'incomplete_setting'
             }),
         });
         const ctx = createExecutionContext();
@@ -84,7 +84,7 @@ describe('POST /discord/new-setting - NewSetting', () => {
         const body = await response.json() as any;
         expect(body).toEqual({
             success: false,
-            error: 'Missing required fields: name, type, default_value'
+            error: 'Missing required fields: setting_key, setting_type, default_value'
         });
     });
 
@@ -99,8 +99,8 @@ describe('POST /discord/new-setting - NewSetting', () => {
             method: 'POST',
             headers: validHeaders,
             body: JSON.stringify({
-                name: 'new_feature_flag',
-                type: 'boolean',
+                setting_key: 'new_feature_flag',
+                setting_type: 'boolean',
                 default_value: '1'
             }),
         });
@@ -133,8 +133,8 @@ describe('POST /discord/new-setting - NewSetting', () => {
             method: 'POST',
             headers: validHeaders,
             body: JSON.stringify({
-                name: 'dup_setting',
-                type: 'boolean',
+                setting_key: 'dup_setting',
+                setting_type: 'boolean',
                 default_value: '1'
             }),
         });
@@ -161,8 +161,8 @@ describe('POST /discord/new-setting - NewSetting', () => {
             method: 'POST',
             headers: validHeaders,
             body: JSON.stringify({
-                name: 'lonely_setting',
-                type: 'string',
+                setting_key: 'lonely_setting',
+                setting_type: 'string',
                 default_value: 'test'
             }),
         });

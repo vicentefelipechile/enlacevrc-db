@@ -149,7 +149,7 @@ export interface DiscordSetting {
 }
 
 export interface NewDiscordSetting {
-    name: string;
-    type: string;
+    setting_key: string;
+    setting_type: string;
     default_value: string;
 }

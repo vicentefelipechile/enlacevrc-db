@@ -16,17 +16,17 @@ import { NewDiscordSetting, DiscordServer } from '../models';
 export async function NewSetting(request: Request, env: Env): Promise<Response> {
     try {
         const {
-            name: settingName,
-            type: settingType,
+            setting_key: settingName,
+            setting_type: settingType,
             default_value: defaultValue
         } = await request.json() as NewDiscordSetting;
 
         if (!settingName || !settingType || defaultValue === undefined) {
-            return ErrorResponse('Missing required fields: name, type, default_value', 400);
+            return ErrorResponse('Missing required fields: setting_key, setting_type, default_value', 400);
         }
 
         // 1. Check if the setting already exists
-        const existingSetting = await env.DB.prepare('SELECT setting_name FROM setting WHERE setting_name = ?').bind(settingName).first();
+        const existingSetting = await env.DB.prepare('SELECT setting_name FROM setting WHERE setting_key = ?').bind(settingName).first();
 
         if (existingSetting) {
             return ErrorResponse(`Setting '${settingName}' already exists`, 409);
