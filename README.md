@@ -21,8 +21,8 @@
 
 This API includes **interactive documentation** powered by Swagger UI:
 
-- **Swagger UI**: [https://enlacevrc-db.vicentefelipechile.workers.dev/docs](https://enlacevrc-db.vicentefelipechile.workers.dev/docs)
-- **OpenAPI Spec**: [https://enlacevrc-db.vicentefelipechile.workers.dev/openapi.json](https://enlacevrc-db.vicentefelipechile.workers.dev/openapi.json)
+- **Swagger UI**: [Docs](https://enlacevrc-db.vicentefelipechile.workers.dev/docs)
+- **OpenAPI Spec**: [Spec](https://enlacevrc-db.vicentefelipechile.workers.dev/openapi.json)
 
 ### Features:
 - 🧪 **Try it out**: Test endpoints directly from your browser
