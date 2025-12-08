@@ -1,5 +1,14 @@
 # EnlaceVRC Database API
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![D1 Database](https://img.shields.io/badge/Database-D1_(SQLite)-F38020?logo=sqlite&logoColor=white)](https://developers.cloudflare.com/d1/)
+[![Swagger UI](https://img.shields.io/badge/Docs-Swagger_UI-85EA2D?logo=swagger&logoColor=black)](https://enlacevrc-db.vicentefelipechile.workers.dev/docs)
+[![API Documentation](https://img.shields.io/badge/API-OpenAPI_3.0-6BA539?logo=openapiinitiative&logoColor=white)](https://enlacevrc-db.vicentefelipechile.workers.dev/openapi.json)
+[![Vitest](https://img.shields.io/badge/Testing-Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
+
+
 ## 📋 Description
 
 **EnlaceVRC Database API** is a backend service built with **Cloudflare Workers** that provides a REST API for managing VRChat user profiles, Discord server configurations, and administrative staff.
