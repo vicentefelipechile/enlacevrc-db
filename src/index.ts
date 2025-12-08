@@ -94,8 +94,8 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
     // OpenAPI Specification (public endpoint)
     if (pathname === '/openapi.json') {
         try {
-            // Fetch the YAML file from static assets
-            const yamlResponse = await fetch(new URL('/openapi.yaml', request.url));
+            // Fetch the YAML file from static assets using ASSETS binding
+            const yamlResponse = await env.ASSETS.fetch(new URL('/openapi.yaml', request.url));
             if (!yamlResponse.ok) {
                 return ErrorResponse('OpenAPI specification not found', 404);
             }

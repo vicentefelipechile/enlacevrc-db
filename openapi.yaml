@@ -25,10 +25,10 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
+  - url: https://enlacevrc-db.vicentefelipechile.workers.dev
+    description: Production server (update with your actual URL)
   - url: http://localhost:8787
     description: Local development server
-  - url: https://enlacevrc-db.your-subdomain.workers.dev
-    description: Production server (update with your actual URL)
 
 tags:
   - name: Profile
