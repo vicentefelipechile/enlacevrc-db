@@ -26,7 +26,7 @@ info:
 
 servers:
   - url: https://enlacevrc-db.vicentefelipechile.workers.dev
-    description: Production server (update with your actual URL)
+    description: Production server
   - url: http://localhost:8787
     description: Local development server
 
