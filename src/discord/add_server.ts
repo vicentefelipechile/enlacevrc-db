@@ -65,7 +65,7 @@ export async function AddServer(request: Request, env: Env, userId: string): Pro
             await LogIt(env.DB, LogLevel.ADDITION, `Discord server added: ${serverName} (${discordServerId}) with no settings to populate`, userId);
             return JsonResponse({
                 success: true,
-                message: 'Discord server added successfully with no settings to populate',
+                message: 'Discord server added successfully',
                 data: {
                     discord_server_id: discordServerId,
                     server_name: serverName,
@@ -81,7 +81,7 @@ export async function AddServer(request: Request, env: Env, userId: string): Pro
         for (const setting of settingsArray) {
             try {
                 const { setting_name: settingName, default_value: defaultValue } = setting;
-                
+
                 const addSettingStatement = env.DB.prepare(
                     'INSERT INTO discord_settings (discord_server_id, setting_key, setting_value, updated_by) VALUES (?, ?, ?, ?)'
                 );

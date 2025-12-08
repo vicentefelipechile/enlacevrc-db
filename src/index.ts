@@ -99,8 +99,15 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
             if (!yamlResponse.ok) {
                 return ErrorResponse('OpenAPI specification not found', 404);
             }
-            const yamlContent = await yamlResponse.text();
-            const openApiJson = yaml.load(yamlContent);
+            let openApiJson: any;
+
+            try {
+                const yamlContent = await yamlResponse.text();
+                openApiJson = yaml.load(yamlContent);
+            } catch (error) {
+                console.error('Failed to parse OpenAPI specification:', error);
+                return ErrorResponse('Failed to parse OpenAPI specification', 500);
+            }
             return new Response(JSON.stringify(openApiJson, null, 2), {
                 status: 200,
                 headers: {

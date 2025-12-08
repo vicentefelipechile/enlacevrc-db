@@ -61,7 +61,7 @@ export async function DeleteServer(request: Request, env: Env, serverId: string,
         // Log the action
         await LogIt(env.DB, LogLevel.REMOVAL, `Discord server deleted: ${server.server_name} (${server.discord_server_id}) with all associated settings`, userId);
 
-        return SuccessResponse('Discord server and all its settings deleted successfully', 200);
+        return SuccessResponse('Discord server deleted successfully', 200);
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';

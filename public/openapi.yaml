@@ -753,25 +753,32 @@ paths:
   # DISCORD ENDPOINTS
   # ============================================================================
   
-  /discord/{serverId}/new:
+  /discord/add-server:
     post:
       tags:
         - Discord
-      summary: Create Discord server configuration
+      summary: Add Discord server
       description: Adds a new Discord server and generates default configurations
       parameters:
-        - name: serverId
-          in: path
+        - name: discord_server_id
+          in: query
           required: true
           schema:
             type: string
           description: Discord server ID
           example: "987654321098765432"
+        - name: discord_server_name
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Discord server name
+          example: "My Server"
         - $ref: '#/components/parameters/DiscordIDHeader'
         - $ref: '#/components/parameters/DiscordNameHeader'
       responses:
         '201':
-          description: Server configuration created successfully
+          description: Server added successfully
           content:
             application/json:
               schema:
@@ -784,7 +791,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 success: false
-                error: "Server already exists"
+                error: "Discord server already exists"
         '401':
           description: Unauthorized
           content:
@@ -795,7 +802,7 @@ paths:
                 success: false
                 error: "Unauthorized"
   
-  /discord/list:
+  /discord/list-servers:
     get:
       tags:
         - Discord
@@ -814,7 +821,47 @@ paths:
         '401':
           description: Unauthorized
   
-  /discord/{serverId}/get:
+  /discord/new-setting:
+    post:
+      tags:
+        - Discord
+      summary: Create a new Discord server setting
+      description: "Creates a new Discord server setting global to all servers. Warning: This operation creates a setting that affects all servers and should be used with caution."
+      parameters:
+        - $ref: '#/components/parameters/DiscordIDHeader'
+        - $ref: '#/components/parameters/DiscordNameHeader'
+        - name: setting_key
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Setting key
+          example: "my_setting"
+        - name: setting_type
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Setting type
+          example: "string"
+        - name: default_value
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Default value
+          example: "my_value"
+      responses:
+        '201':
+          description: Setting created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Unauthorized
+  
+  /discord/{serverId}/get-setting:
     get:
       tags:
         - Discord
@@ -876,7 +923,72 @@ paths:
                 success: false
                 error: "Unauthorized"
   
-  /discord/{serverId}/update:
+  /discord/{serverId}/list-settings:
+    get:
+      tags:
+        - Discord
+      summary: List Discord server settings
+      description: Retrieves settings for a specific Discord server
+      parameters:
+        - name: serverId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "987654321098765432"
+        - $ref: '#/components/parameters/DiscordIDHeader'
+        - $ref: '#/components/parameters/DiscordNameHeader'
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Limit the number of results
+        - name: start_date
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Start date for filtering
+        - name: end_date
+          in: query
+          required: false
+          schema:
+            type: string
+          description: End date for filtering
+        - name: created_by
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Who created the setting (Dev Only)
+      responses:
+        '200':
+          description: Server settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataResponse'
+        '404':
+          description: Server not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Discord server not found"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Unauthorized"
+  
+  /discord/{serverId}/update-setting:
     put:
       tags:
         - Discord
@@ -904,6 +1016,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
+              example:
+                success: true
+                message: "Setting updated successfully"
         '400':
           description: Missing required fields
           content:
@@ -932,7 +1047,7 @@ paths:
                 success: false
                 error: "Unauthorized"
   
-  /discord/{serverId}/delete:
+  /discord/{serverId}/delete-server:
     delete:
       tags:
         - Discord
@@ -954,6 +1069,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
+              example:
+                success: true
+                message: "Discord server deleted successfully"
         '403':
           description: Forbidden - requires admin permissions
           content:
@@ -982,7 +1100,7 @@ paths:
                 success: false
                 error: "Unauthorized"
   
-  /discord/{serverId}/exists:
+  /discord/{serverId}/exists-server:
     get:
       tags:
         - Discord
