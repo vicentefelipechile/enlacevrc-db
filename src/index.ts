@@ -15,6 +15,7 @@ import { StaffHandler } from './staff/_handler';
 import { ErrorResponse } from './responses';
 import { GetLogs } from './logs/get';
 import { ValidateAdminAccess } from './logs/validate-admin';
+import * as yaml from 'js-yaml';
 
 // =================================================================================================
 // Helper Functions
@@ -31,7 +32,7 @@ function AddCorsHeaders(response: Response): Response {
     headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Api-Key, X-Discord-ID, X-Discord-Name');
     headers.set('Access-Control-Max-Age', '86400');
-    
+
     return new Response(response.body, {
         status: response.status,
         statusText: response.statusText,
@@ -83,6 +84,33 @@ function HandleAuthentication(request: Request, env: Env): Response | null {
 async function RouteRequest(request: Request, env: Env): Promise<Response> {
     const { pathname } = new URL(request.url);
     const pathParts = pathname.split('/').filter(p => p);
+
+    // Swagger Documentation (public endpoint)
+    if (pathname === '/docs') {
+        const redirectUrl = new URL('/swagger-ui/index.html', request.url);
+        return Response.redirect(redirectUrl.toString(), 302);
+    }
+
+    // OpenAPI Specification (public endpoint)
+    if (pathname === '/openapi.json') {
+        try {
+            // Fetch the YAML file from static assets
+            const yamlResponse = await fetch(new URL('/openapi.yaml', request.url));
+            if (!yamlResponse.ok) {
+                return ErrorResponse('OpenAPI specification not found', 404);
+            }
+            const yamlContent = await yamlResponse.text();
+            const openApiJson = yaml.load(yamlContent);
+            return new Response(JSON.stringify(openApiJson, null, 2), {
+                status: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+        } catch (error) {
+            return ErrorResponse('Failed to load OpenAPI specification', 500);
+        }
+    }
 
     // Public endpoints that don't require X-Discord-ID or full authentication
     if (pathParts[0] === 'auth' && pathParts[1] === 'validate-admin') {
@@ -149,9 +177,12 @@ export default {
 
         const { pathname } = new URL(request.url);
         const pathParts = pathname.split('/').filter(p => p);
-        
+
         // Public endpoints that bypass API_KEY authentication
-        const isPublicEndpoint = pathParts[0] === 'auth' && pathParts[1] === 'validate-admin';
+        const isPublicEndpoint =
+            pathname === '/docs' ||
+            pathname === '/openapi.json' ||
+            (pathParts[0] === 'auth' && pathParts[1] === 'validate-admin');
 
         // Step 1: Authenticate the request (skip for public endpoints)
         if (!isPublicEndpoint) {
@@ -163,7 +194,7 @@ export default {
 
         // Step 2: Route the request to the correct handler
         const response = await RouteRequest(request, env);
-        
+
         // Step 3: Add CORS headers to the response
         return AddCorsHeaders(response);
     },
