@@ -14,6 +14,7 @@ import { GetGroup } from './get-group';
 import { GetServer } from './get-server';
 import { UpdateGroup } from './update-group';
 import { DeleteGroup } from './delete-group';
+import { LogGroup } from './log-group';
 
 // =================================================================================================
 // GroupHandler Function
@@ -39,6 +40,12 @@ export async function GroupHandler(request: Request, env: Env, userId: string, g
                     return ErrorResponse(`Method ${request.method} not allowed for /group/add-group`, 405);
                 }
                 return AddGroup(request, env, userId);
+
+            case 'log-group':
+                if (request.method !== 'POST') {
+                    return ErrorResponse(`Method ${request.method} not allowed for /group/log-group`, 405);
+                }
+                return LogGroup(request, env, userId);
 
             default:
                 return ErrorResponse('Invalid group endpoint', 400);

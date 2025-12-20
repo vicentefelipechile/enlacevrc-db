@@ -117,3 +117,15 @@ CREATE TABLE IF NOT EXISTS vrchat_group (
     added_by          TEXT NOT NULL,
     FOREIGN KEY(discord_server_id) REFERENCES discord_server(discord_server_id)
 );
+
+/* Created on 2025-12-20 16:28 */
+CREATE TABLE IF NOT EXISTS vrchat_group_log (
+    vrchat_group_log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    log_id              INTEGER,
+    vrchat_group_id     TEXT NOT NULL,
+    discord_server_id   TEXT NOT NULL,
+    group_name          TEXT NOT NULL,
+    action_description  TEXT NOT NULL,
+    added_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    added_by            TEXT NOT NULL
+);

@@ -319,6 +319,26 @@ components:
           type: string
           example: "Updated Group Name"
     
+    LogVRChatGroup:
+      type: object
+      required:
+        - vrchat_group_id
+        - discord_server_id
+        - action_description
+      properties:
+        vrchat_group_id:
+          type: string
+          description: VRChat group ID
+          example: "grp_12345678-1234-1234-1234-123456789012"
+        discord_server_id:
+          type: string
+          description: Discord server ID
+          example: "987654321098765432"
+        action_description:
+          type: string
+          description: Description of the action to log
+          example: "Group settings updated by administrator"
+    
     SuccessResponse:
       type: object
       properties:
@@ -1209,6 +1229,88 @@ paths:
               example:
                 success: false
                 error: "VRChat group already exists for this Discord server"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Unauthorized"
+  
+  /group/log-group:
+    post:
+      tags:
+        - Group
+      summary: Create log entry for VRChat group
+      description: Creates a log entry for an existing VRChat group with an incremental log_id per group-server combination
+      parameters:
+        - $ref: '#/components/parameters/DiscordIDHeader'
+        - $ref: '#/components/parameters/DiscordNameHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogVRChatGroup'
+      responses:
+        '201':
+          description: Log entry created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Log entry created successfully"
+                  data:
+                    type: object
+                    properties:
+                      log_id:
+                        type: integer
+                        description: Incremental log ID for this group-server combination
+                        example: 5
+                      vrchat_group_id:
+                        type: string
+                        example: "grp_12345678-1234-1234-1234-123456789012"
+                      discord_server_id:
+                        type: string
+                        example: "987654321098765432"
+                      action_description:
+                        type: string
+                        example: "Group settings updated by administrator"
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Missing required fields: vrchat_group_id, discord_server_id, and action_description are required"
+        '404':
+          description: VRChat group not found for Discord server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "VRChat group does not exist for this Discord server"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Internal Server Error"
         '401':
           description: Unauthorized
           content:

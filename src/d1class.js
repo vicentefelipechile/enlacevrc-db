@@ -138,6 +138,26 @@ const HOUR = 60 * MINUTE;
  * @property {string} discord_name - Nombre de Discord del usuario que realiza la petición
  */
 
+/**
+ * @typedef {Object} DeleteGroupResponse
+ * @property {boolean} success - Indica si la petición fue exitosa
+ * @property {string} message - Mensaje de la petición
+ * @property {Object} data - Datos de la petición
+ * @property {number} data.vrchat_group_id - ID del grupo de VRChat
+ * @property {string} data.group_name - Nombre del grupo
+ */
+
+/**
+ * @typedef {Object} LogGroupResponse
+ * @property {boolean} success - Indica si la petición fue exitosa
+ * @property {string} message - Mensaje de la petición
+ * @property {UserRequestData} data - Datos de la petición
+ * @property {number} data.log_id - ID único del log
+ * @property {string} data.vrchat_group_id - ID del grupo de VRChat
+ * @property {string} data.discord_server_id - ID del servidor de Discord asociado
+ * @property {string} data.action_description - Descripción de la acción
+ */
+
 
 /**
  * D1Class - Client para interactuar con la API de EnlaceVRC
@@ -814,6 +834,28 @@ class D1Class {
         D1Class._invalidateCache(`group:${groupId}`);
         return response;
     }
+
+    /**
+     * Crea una entrada de log para un grupo de VRChat existente
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
+     * @param {string} vrchatGroupId - ID del grupo de VRChat
+     * @param {string} discordServerId - ID del servidor de Discord
+     * @param {string} actionDescription - Descripción de la acción registrada
+     * @returns {Promise<LogGroupResponse>} Respuesta del servidor con el log_id generado
+     */
+    static async logVRChatGroup(userRequestData, vrchatGroupId, discordServerId, actionDescription) {
+        const response = await D1Class._request('/group/log-group', userRequestData, {
+            method: 'POST',
+            body: JSON.stringify({
+                vrchat_group_id: vrchatGroupId,
+                discord_server_id: discordServerId,
+                action_description: actionDescription
+            })
+        });
+
+        return response;
+    }
+
 
     // =================================================================================================
     // Utility Methods
