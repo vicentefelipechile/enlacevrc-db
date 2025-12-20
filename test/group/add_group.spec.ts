@@ -91,6 +91,7 @@ describe('POST /group/add-group - AddGroup', () => {
     expect(body.data.vrchat_group_id).toBe('grp_test123');
     expect(body.data.discord_server_id).toBe('123456789');
     expect(body.data.group_name).toBe('My VRChat Group');
+    expect(body.data.log_id).toBe(1);
   });
 
   it('should return 409 when group already exists for server', async () => {

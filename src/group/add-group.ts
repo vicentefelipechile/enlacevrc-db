@@ -119,7 +119,8 @@ export async function AddGroup(request: Request, env: Env, userId: string): Prom
             data: {
                 vrchat_group_id: vrchatGroupId,
                 discord_server_id: discordServerId,
-                group_name: groupName
+                group_name: groupName,
+                log_id: previousLogId + 1
             }
         }, 201);
 

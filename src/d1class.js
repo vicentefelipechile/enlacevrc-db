@@ -151,11 +151,22 @@ const HOUR = 60 * MINUTE;
  * @typedef {Object} LogGroupResponse
  * @property {boolean} success - Indica si la petición fue exitosa
  * @property {string} message - Mensaje de la petición
- * @property {UserRequestData} data - Datos de la petición
+ * @property {Object} data - Datos de la petición
  * @property {number} data.log_id - ID único del log
  * @property {string} data.vrchat_group_id - ID del grupo de VRChat
  * @property {string} data.discord_server_id - ID del servidor de Discord asociado
  * @property {string} data.action_description - Descripción de la acción
+ */
+
+/**
+ * @typedef {Object} AddGroupResponse
+ * @property {boolean} success - Indica si la petición fue exitosa
+ * @property {string} message - Mensaje de la petición
+ * @property {Object} data - Datos de la petición
+ * @property {string} data.vrchat_group_id - ID del grupo de VRChat
+ * @property {string} data.discord_server_id - ID del servidor de Discord asociado
+ * @property {string} data.group_name - Nombre del grupo
+ * @property {number} data.log_id - ID del log
  */
 
 
