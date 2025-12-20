@@ -11,6 +11,7 @@
 
 import { ProfileHandler } from './profile/_handler';
 import { DiscordHandler } from './discord/_handler';
+import { GroupHandler } from './group/_handler';
 import { StaffHandler } from './staff/_handler';
 import { ErrorResponse } from './responses';
 import { GetLogs } from './logs/get';
@@ -143,6 +144,12 @@ async function RouteRequest(request: Request, env: Env): Promise<Response> {
         const serverId = pathParts.length > 1 ? pathParts[1] : undefined;
         const action = pathParts.length > 2 ? pathParts[2] : undefined;
         return DiscordHandler(request, env, userId, serverId, action);
+    }
+
+    if (pathParts[0] === 'group') {
+        const groupId = pathParts.length > 1 ? pathParts[1] : undefined;
+        const action = pathParts.length > 2 ? pathParts[2] : undefined;
+        return GroupHandler(request, env, userId, groupId, action);
     }
 
     if (pathParts[0] === 'staff') {

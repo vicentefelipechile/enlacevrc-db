@@ -153,3 +153,15 @@ export interface NewDiscordSetting {
     setting_type: string;
     default_value: string;
 }
+
+/**
+ * @description Represents a VRChat group linked to a Discord server
+ * @interface VRChatGroup
+ */
+export interface VRChatGroup {
+    vrchat_group_id: string;
+    discord_server_id: string;
+    group_name: string;
+    added_at: Date;
+    added_by: string;
+}

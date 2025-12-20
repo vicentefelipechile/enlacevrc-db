@@ -15,8 +15,8 @@ import { UpdateSetting } from './update_setting';
 import { ServerExists } from './exists_server';
 import { AddServer } from './add_server';
 import { ListServers } from './list_servers';
-import { DeleteServer } from './delete_server';
 import { NewSetting } from './new_settings';
+import { ListGroups } from './list_groups';
 
 // =================================================================================================
 // DiscordHandler Function
@@ -88,17 +88,17 @@ export async function DiscordHandler(request: Request, env: Env, userId: string,
             }
             return UpdateSetting(request, env, serverId);
 
-        case 'delete-server':
-            if (request.method !== 'DELETE') {
-                return ErrorResponse(`Method ${request.method} not allowed for /discord/${serverId}/delete-server`, 405);
-            }
-            return DeleteServer(request, env, serverId, userId);
-
         case 'exists-server':
             if (request.method !== 'GET') {
                 return ErrorResponse(`Method ${request.method} not allowed for /discord/${serverId}/exists-server`, 405);
             }
             return ServerExists(request, env, serverId);
+
+        case 'list-groups':
+            if (request.method !== 'GET') {
+                return ErrorResponse(`Method ${request.method} not allowed for /discord/${serverId}/list-groups`, 405);
+            }
+            return ListGroups(request, env, serverId);
 
         default:
             return ErrorResponse('Unknown action', 404);
