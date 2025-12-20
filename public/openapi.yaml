@@ -35,6 +35,8 @@ tags:
     description: User profile management endpoints
   - name: Discord
     description: Discord server configuration endpoints
+  - name: Group
+    description: VRChat Group management endpoints
   - name: Staff
     description: Administrative staff management endpoints
   - name: Logs
@@ -262,6 +264,60 @@ components:
         setting_value:
           type: string
           example: "123456789"
+    
+    VRChatGroup:
+      type: object
+      properties:
+        vrchat_group_id:
+          type: string
+          description: VRChat group ID
+          example: "grp_12345678-1234-1234-1234-123456789012"
+        discord_server_id:
+          type: string
+          description: Discord server ID this group belongs to
+          example: "987654321098765432"
+        group_name:
+          type: string
+          description: VRChat group name
+          example: "My VRChat Group"
+        added_at:
+          type: string
+          format: date-time
+        added_by:
+          type: string
+          description: Discord ID of user who added this group
+        updated_at:
+          type: string
+          format: date-time
+        updated_by:
+          type: string
+          description: Discord ID of user who last updated this group
+    
+    NewVRChatGroup:
+      type: object
+      required:
+        - vrchat_group_id
+        - discord_server_id
+        - group_name
+      properties:
+        vrchat_group_id:
+          type: string
+          example: "grp_12345678-1234-1234-1234-123456789012"
+        discord_server_id:
+          type: string
+          example: "987654321098765432"
+        group_name:
+          type: string
+          example: "My VRChat Group"
+    
+    UpdateVRChatGroup:
+      type: object
+      required:
+        - group_name
+      properties:
+        group_name:
+          type: string
+          example: "Updated Group Name"
     
     SuccessResponse:
       type: object
@@ -1047,59 +1103,6 @@ paths:
                 success: false
                 error: "Unauthorized"
   
-  /discord/{serverId}/delete-server:
-    delete:
-      tags:
-        - Discord
-      summary: Delete Discord server configuration
-      description: Removes a Discord server and all its settings (requires admin permissions)
-      parameters:
-        - name: serverId
-          in: path
-          required: true
-          schema:
-            type: string
-          example: "987654321098765432"
-        - $ref: '#/components/parameters/DiscordIDHeader'
-        - $ref: '#/components/parameters/DiscordNameHeader'
-      responses:
-        '200':
-          description: Server deleted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-              example:
-                success: true
-                message: "Discord server deleted successfully"
-        '403':
-          description: Forbidden - requires admin permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                error: "Forbidden: Admin permissions required"
-        '404':
-          description: Server not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                error: "Discord server not found"
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                error: "Unauthorized"
-  
   /discord/{serverId}/exists-server:
     get:
       tags:
@@ -1129,6 +1132,370 @@ paths:
                   exists:
                     type: boolean
                     example: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Unauthorized"
+
+  # ============================================================================
+  # GROUP ENDPOINTS
+  # ============================================================================
+  
+  /group/add-group:
+    post:
+      tags:
+        - Group
+      summary: Add VRChat group to Discord server
+      description: Associates a VRChat group with a Discord server (requires staff permissions)
+      parameters:
+        - $ref: '#/components/parameters/DiscordIDHeader'
+        - $ref: '#/components/parameters/DiscordNameHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewVRChatGroup'
+      responses:
+        '201':
+          description: Group added successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/VRChatGroup'
+              example:
+                success: true
+                message: "VRChat group added successfully"
+                data:
+                  vrchat_group_id: "grp_12345678-1234-1234-1234-123456789012"
+                  discord_server_id: "987654321098765432"
+                  group_name: "My VRChat Group"
+                  added_at: "2024-01-15T10:30:00Z"
+                  added_by: "123456789012345678"
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Missing required fields: vrchat_group_id, discord_server_id, group_name"
+        '404':
+          description: Discord server does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Discord server does not exist"
+        '409':
+          description: Group already exists for this server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "VRChat group already exists for this Discord server"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Unauthorized"
+  
+  /discord/{serverId}/list-groups:
+    get:
+      tags:
+        - Group
+      summary: List all VRChat groups for a Discord server
+      description: Retrieves all VRChat groups associated with a Discord server
+      parameters:
+        - name: serverId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Discord server ID
+          example: "987654321098765432"
+        - $ref: '#/components/parameters/DiscordIDHeader'
+        - $ref: '#/components/parameters/DiscordNameHeader'
+      responses:
+        '200':
+          description: List of VRChat groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      discord_server_id:
+                        type: string
+                        example: "987654321098765432"
+                      groups:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/VRChatGroup'
+                      total:
+                        type: integer
+                        description: Total number of groups
+                        example: 3
+        '404':
+          description: Discord server not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Discord server not found"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Unauthorized"
+  
+  /group/{groupId}/get-group:
+    get:
+      tags:
+        - Group
+      summary: Get VRChat group details
+      description: Retrieves detailed information about a specific VRChat group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: VRChat group ID
+          example: "grp_12345678-1234-1234-1234-123456789012"
+        - $ref: '#/components/parameters/DiscordIDHeader'
+        - $ref: '#/components/parameters/DiscordNameHeader'
+      responses:
+        '200':
+          description: Group details with server information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/VRChatGroup'
+                      - type: object
+                        properties:
+                          server_name:
+                            type: string
+                            description: Discord server name
+                            example: "My VRChat Server"
+        '404':
+          description: VRChat group not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "VRChat group not found"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Unauthorized"
+  
+  /group/{groupId}/get-server:
+    get:
+      tags:
+        - Group
+      summary: Get Discord server for a VRChat group
+      description: Retrieves the Discord server associated with a VRChat group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: VRChat group ID
+          example: "grp_12345678-1234-1234-1234-123456789012"
+        - $ref: '#/components/parameters/DiscordIDHeader'
+        - $ref: '#/components/parameters/DiscordNameHeader'
+      responses:
+        '200':
+          description: Discord server information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/DiscordServer'
+        '404':
+          description: VRChat group not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "VRChat group not found"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Unauthorized"
+  
+  /group/{groupId}/update-group:
+    put:
+      tags:
+        - Group
+      summary: Update VRChat group name
+      description: Updates the name of a VRChat group (requires staff permissions)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: VRChat group ID
+          example: "grp_12345678-1234-1234-1234-123456789012"
+        - $ref: '#/components/parameters/DiscordIDHeader'
+        - $ref: '#/components/parameters/DiscordNameHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVRChatGroup'
+      responses:
+        '200':
+          description: Group updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/VRChatGroup'
+              example:
+                success: true
+                message: "VRChat group updated successfully"
+                data:
+                  vrchat_group_id: "grp_12345678-1234-1234-1234-123456789012"
+                  group_name: "Updated Group Name"
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Missing required field: group_name"
+        '404':
+          description: VRChat group not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "VRChat group not found"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Unauthorized"
+  
+  /group/{groupId}/delete-group:
+    delete:
+      tags:
+        - Group
+      summary: Delete VRChat group
+      description: Removes a VRChat group from a Discord server (requires staff permissions)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: VRChat group ID
+          example: "grp_12345678-1234-1234-1234-123456789012"
+        - $ref: '#/components/parameters/DiscordIDHeader'
+        - $ref: '#/components/parameters/DiscordNameHeader'
+      responses:
+        '200':
+          description: Group deleted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          vrchat_group_id:
+                            type: string
+                            example: "grp_12345678-1234-1234-1234-123456789012"
+              example:
+                success: true
+                message: "VRChat group deleted successfully"
+                data:
+                  vrchat_group_id: "grp_12345678-1234-1234-1234-123456789012"
+        '404':
+          description: VRChat group not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "VRChat group not found"
         '401':
           description: Unauthorized
           content:
