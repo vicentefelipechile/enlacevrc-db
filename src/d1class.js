@@ -60,7 +60,9 @@ class D1Class {
         // 30 minutos
         staff: MINUTE * 30,
         // 2 horas
-        discordConfig: HOUR * 2
+        discordConfig: HOUR * 2,
+        // 1 hora
+        group: HOUR
     };
 
     /**
@@ -599,20 +601,147 @@ class D1Class {
         return response.data;
     }
 
+    // =================================================================================================
+    // VRChat Group Methods
+    // =================================================================================================
+
     /**
-     * Elimina un servidor de Discord y todas sus configuraciones
+     * Añade un nuevo grupo de VRChat a un servidor de Discord
      * @param {Object} userRequestData - Datos del usuario que realiza la petición
      * @param {string} userRequestData.discord_id - Discord ID del usuario
      * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
-     * @param {string} serverId - ID del servidor de Discord a eliminar
+     * @param {string} vrchatGroupId - ID del grupo de VRChat
+     * @param {string} discordServerId - ID del servidor de Discord
+     * @param {string} groupName - Nombre del grupo
      * @returns {Promise<Object>} Respuesta del servidor
      */
-    static async deleteDiscordServer(userRequestData, serverId) {
-        const response = await D1Class._request(`/discord/${serverId}/delete-server`, userRequestData, {
+    static async addVRChatGroup(userRequestData, vrchatGroupId, discordServerId, groupName) {
+        const response = await D1Class._request('/group/add-group', userRequestData, {
+            method: 'POST',
+            body: JSON.stringify({
+                vrchat_group_id: vrchatGroupId,
+                discord_server_id: discordServerId,
+                group_name: groupName
+            })
+        });
+
+        D1Class._invalidateCache(`group:${vrchatGroupId}`);
+        D1Class._invalidateCache(`discord:${discordServerId}:groups`);
+        return response;
+    }
+
+    /**
+     * Lista todos los grupos de VRChat de un servidor de Discord
+     * @param {Object} userRequestData - Datos del usuario que realiza la petición
+     * @param {string} userRequestData.discord_id - Discord ID del usuario
+     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {string} serverId - ID del servidor de Discord
+     * @param {boolean} [useCache=true] - Usar caché
+     * @returns {Promise<Array>} Lista de grupos del servidor
+     */
+    static async listVRChatGroups(userRequestData, serverId, useCache = true) {
+        const cacheKey = `discord:${serverId}:groups`;
+
+        if (!useCache) {
+            D1Class.cache.del(cacheKey);
+        }
+
+        return D1Class._getCached(
+            cacheKey,
+            async () => {
+                const response = await D1Class._request(`/discord/${serverId}/list-groups`, userRequestData);
+                return response.data.groups;
+            },
+            D1Class.ttls.group
+        );
+    }
+
+    /**
+     * Obtiene información de un grupo de VRChat
+     * @param {Object} userRequestData - Datos del usuario que realiza la petición
+     * @param {string} userRequestData.discord_id - Discord ID del usuario
+     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {string} groupId - ID del grupo de VRChat
+     * @param {boolean} [useCache=true] - Usar caché
+     * @returns {Promise<Object>} Datos del grupo
+     */
+    static async getVRChatGroup(userRequestData, groupId, useCache = true) {
+        const cacheKey = `group:${groupId}`;
+
+        if (!useCache) {
+            D1Class.cache.del(cacheKey);
+        }
+
+        return D1Class._getCached(
+            cacheKey,
+            async () => {
+                const response = await D1Class._request(`/group/${groupId}/get-group`, userRequestData);
+                return response.data;
+            },
+            D1Class.ttls.group
+        );
+    }
+
+    /**
+     * Obtiene el servidor de Discord al que pertenece un grupo de VRChat
+     * @param {Object} userRequestData - Datos del usuario que realiza la petición
+     * @param {string} userRequestData.discord_id - Discord ID del usuario
+     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {string} groupId - ID del grupo de VRChat
+     * @param {boolean} [useCache=true] - Usar caché
+     * @returns {Promise<Object>} Datos del servidor Discord
+     */
+    static async getVRChatGroupServer(userRequestData, groupId, useCache = true) {
+        const cacheKey = `group:${groupId}:server`;
+
+        if (!useCache) {
+            D1Class.cache.del(cacheKey);
+        }
+
+        return D1Class._getCached(
+            cacheKey,
+            async () => {
+                const response = await D1Class._request(`/group/${groupId}/get-server`, userRequestData);
+                return response.data;
+            },
+            D1Class.ttls.group
+        );
+    }
+
+    /**
+     * Actualiza el nombre de un grupo de VRChat
+     * @param {Object} userRequestData - Datos del usuario que realiza la petición
+     * @param {string} userRequestData.discord_id - Discord ID del usuario
+     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {string} groupId - ID del grupo de VRChat
+     * @param {string} newName - Nuevo nombre del grupo
+     * @returns {Promise<Object>} Respuesta del servidor
+     */
+    static async updateVRChatGroup(userRequestData, groupId, newName) {
+        const response = await D1Class._request(`/group/${groupId}/update-group`, userRequestData, {
+            method: 'PUT',
+            body: JSON.stringify({ group_name: newName })
+        });
+
+        D1Class.cache.del(`group:${groupId}`);
+        D1Class.cache.del(`group:${groupId}:server`);
+        return response;
+    }
+
+    /**
+     * Elimina un grupo de VRChat
+     * @param {Object} userRequestData - Datos del usuario que realiza la petición
+     * @param {string} userRequestData.discord_id - Discord ID del usuario
+     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {string} groupId - ID del grupo de VRChat
+     * @returns {Promise<Object>} Respuesta del servidor
+     */
+    static async deleteVRChatGroup(userRequestData, groupId) {
+        const response = await D1Class._request(`/group/${groupId}/delete-group`, userRequestData, {
             method: 'DELETE'
         });
 
-        D1Class._invalidateCache(`discord:${serverId}`);
+        D1Class._invalidateCache(`group:${groupId}`);
         return response;
     }
 
@@ -646,6 +775,13 @@ class D1Class {
      */
     static clearDiscordCache() {
         D1Class._invalidateCache('discord:');
+    }
+
+    /**
+     * Limpia la caché de grupos de VRChat
+     */
+    static clearGroupCache() {
+        D1Class._invalidateCache('group:');
     }
 
     /**
