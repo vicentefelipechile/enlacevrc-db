@@ -1,59 +1,20 @@
-import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
+import { createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
 import worker from '../../src/index';
-
-import poblate from '../../db/poblate.sql?raw';
-import schema from '../../db/schema.sql?raw';
-import test from '../../db/test.sql?raw';
+import { initializeDatabase, clearAndReloadTestData, createTestEnv, createValidHeaders } from '../helpers/setup';
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
 describe('POST /profile/new - NewProfile', () => {
-  const validHeaders = {
-    Authorization: 'Bearer test-api-key',
-    'X-Discord-ID': 'test-user-id',
-    'X-Discord-Name': 'TestUser',
-    'Content-Type': 'application/json',
-  };
-  const localEnv = { ...env, API_KEY: 'test-api-key' };
+  const validHeaders = createValidHeaders();
+  const localEnv = createTestEnv();
 
   beforeAll(async () => {
-    const cleanedSchemas = schema
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-    
-    const cleanedPoblate = poblate
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-
-    const preparedStatements = cleanedSchemas.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
-    });
-
-    const poblateStatements = cleanedPoblate.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
-    });
-      
-    await localEnv.DB.batch(preparedStatements);
-    await localEnv.DB.batch(poblateStatements);
+    await initializeDatabase(localEnv.DB);
   });
 
   beforeEach(async () => {
-    const tablesToClear = ["discord_settings", "setting", "profiles", "discord_server", "staff", "bot_admin", "log"];
-    for (const table of tablesToClear) {
-      await localEnv.DB.exec(`DELETE FROM ${table}`);
-    }
-    const cleanedTest = test
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-    
-    const statements = cleanedTest.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
-    });
-    await localEnv.DB.batch(statements);
+    await clearAndReloadTestData(localEnv.DB);
   });
 
   it('should return 405 for non-POST methods', async () => {
@@ -64,7 +25,7 @@ describe('POST /profile/new - NewProfile', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(405);
     const body = await response.json() as any;
     expect(body).toEqual({ success: false, error: 'Method GET not allowed for /profile/new' });
@@ -79,7 +40,7 @@ describe('POST /profile/new - NewProfile', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(400);
     const body = await response.json() as any;
     expect(body).toEqual({ success: false, error: 'Missing required fields: vrchat_id, discord_id and vrchat_name are required' });
@@ -98,7 +59,7 @@ describe('POST /profile/new - NewProfile', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(201);
     const body = await response.json() as any;
     expect(body).toEqual({ success: true, message: 'Profile created successfully' });
@@ -117,7 +78,7 @@ describe('POST /profile/new - NewProfile', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(409);
     const body = await response.json() as any;
     expect(body).toEqual({ success: false, error: 'Profile with this VRChat ID already exists' });
@@ -129,11 +90,11 @@ describe('POST /profile/new - NewProfile', () => {
       headers: validHeaders,
       body: 'invalid json',
     });
-    const localEnv = { ...env, API_KEY: 'test-api-key' };
+    const customEnv = { ...localEnv, API_KEY: 'test-api-key' };
     const ctx = createExecutionContext();
-    const response = await worker.fetch(request, localEnv, ctx);
+    const response = await worker.fetch(request, customEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(400);
     const body = await response.json() as any;
     expect(body).toEqual({ success: false, error: 'Invalid JSON in request body' });

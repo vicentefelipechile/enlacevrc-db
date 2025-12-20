@@ -1,59 +1,20 @@
-import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
+import { createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
 import worker from '../../src/index';
-
-import poblate from '../../db/poblate.sql?raw';
-import schema from '../../db/schema.sql?raw';
-import test from '../../db/test.sql?raw';
+import { clearAndReloadTestData, createTestEnv, createValidHeaders, initializeDatabase } from '../helpers/setup';
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
 describe('POST /discord/add-server - AddServer', () => {
-  const validHeaders = {
-    Authorization: 'Bearer test-api-key',
-    'X-Discord-ID': '987654321',
-    'X-Discord-Name': 'TestStaff',
-    'Content-Type': 'application/json',
-  };
-  const localEnv = { ...env, API_KEY: 'test-api-key' };
+  const validHeaders = createValidHeaders();
+  const localEnv = createTestEnv();
 
   beforeAll(async () => {
-    const cleanedSchemas = schema
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-    
-    const cleanedPoblate = poblate
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-
-    const preparedStatements = cleanedSchemas.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
-    });
-
-    const poblateStatements = cleanedPoblate.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
-    });
-      
-    await localEnv.DB.batch(preparedStatements);
-    await localEnv.DB.batch(poblateStatements);
+    await initializeDatabase(localEnv.DB);
   });
 
   beforeEach(async () => {
-    const tablesToClear = ["discord_settings", "setting", "profiles", "discord_server", "staff", "bot_admin", "log"];
-    for (const table of tablesToClear) {
-      await localEnv.DB.exec(`DELETE FROM ${table}`);
-    }
-    const cleanedTest = test
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-    
-    const statements = cleanedTest.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
-    });
-    await localEnv.DB.batch(statements);
+    await clearAndReloadTestData(localEnv.DB);
   });
 
   it('should return 405 for non-POST methods', async () => {
@@ -64,7 +25,7 @@ describe('POST /discord/add-server - AddServer', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(405);
     const body = await response.json() as any;
     expect(body.success).toBe(false);
@@ -82,12 +43,12 @@ describe('POST /discord/add-server - AddServer', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(400);
     const body = await response.json() as any;
-    expect(body).toEqual({ 
-      success: false, 
-      error: 'Missing required fields: discord_server_id and server_name are required' 
+    expect(body).toEqual({
+      success: false,
+      error: 'Missing required fields: discord_server_id and server_name are required'
     });
   });
 
@@ -102,12 +63,12 @@ describe('POST /discord/add-server - AddServer', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(400);
     const body = await response.json() as any;
-    expect(body).toEqual({ 
-      success: false, 
-      error: 'Missing required fields: discord_server_id and server_name are required' 
+    expect(body).toEqual({
+      success: false,
+      error: 'Missing required fields: discord_server_id and server_name are required'
     });
   });
 
@@ -120,12 +81,12 @@ describe('POST /discord/add-server - AddServer', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(400);
     const body = await response.json() as any;
-    expect(body).toEqual({ 
-      success: false, 
-      error: 'Missing required fields: discord_server_id and server_name are required' 
+    expect(body).toEqual({
+      success: false,
+      error: 'Missing required fields: discord_server_id and server_name are required'
     });
   });
 
@@ -141,12 +102,12 @@ describe('POST /discord/add-server - AddServer', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(409);
     const body = await response.json() as any;
-    expect(body).toEqual({ 
-      success: false, 
-      error: 'Discord server already exists' 
+    expect(body).toEqual({
+      success: false,
+      error: 'Discord server already exists'
     });
   });
 
@@ -162,7 +123,7 @@ describe('POST /discord/add-server - AddServer', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(201);
     const body = await response.json() as any;
     expect(body.success).toBe(true);
@@ -185,15 +146,15 @@ describe('POST /discord/add-server - AddServer', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(201);
     const body = await response.json() as any;
-    
+
     // Verify settings were actually created in the database
     const serverSettings = await localEnv.DB.prepare(
       'SELECT COUNT(*) as count FROM discord_settings WHERE discord_server_id = ?'
     ).bind('555444333').first() as { count: number };
-    
+
     expect(serverSettings.count).toBe(body.data.settings_added);
     expect(body.data.settings_added).toBe(body.data.total_settings);
   });
@@ -210,14 +171,14 @@ describe('POST /discord/add-server - AddServer', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(201);
-    
+
     // Verify server in database
     const server = await localEnv.DB.prepare(
       'SELECT discord_server_id, server_name, added_by FROM discord_server WHERE discord_server_id = ?'
     ).bind('222111000').first() as any;
-    
+
     expect(server).toBeDefined();
     expect(server.discord_server_id).toBe('222111000');
     expect(server.server_name).toBe('Verification Server');
@@ -236,16 +197,16 @@ describe('POST /discord/add-server - AddServer', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(201);
-    
+
     // Verify settings have correct default values
     const settings = await localEnv.DB.prepare(
       'SELECT setting_key, setting_value FROM discord_settings WHERE discord_server_id = ? ORDER BY setting_key'
     ).bind('333222111').all() as any;
-    
+
     expect(settings.results.length).toBeGreaterThan(0);
-    
+
     // Verify each setting has a value
     settings.results.forEach((setting: any) => {
       expect(setting.setting_key).toBeDefined();
@@ -265,18 +226,18 @@ describe('POST /discord/add-server - AddServer', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(201);
     const body = await response.json() as any;
-    
+
     expect(body.data.settings_added).toBe(4);
     expect(body.data.total_settings).toBe(4);
-    
+
     // Verify specific settings exist
     const verificationRole = await localEnv.DB.prepare(
       'SELECT setting_value FROM discord_settings WHERE discord_server_id = ? AND setting_key = ?'
     ).bind('444333222', 'verification_role').first() as any;
-    
+
     expect(verificationRole).toBeDefined();
   });
 
@@ -292,7 +253,7 @@ describe('POST /discord/add-server - AddServer', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(201);
     const body = await response.json() as any;
     expect(body.data.server_name).toBe('Server with "Special" & <Characters>');
@@ -310,14 +271,14 @@ describe('POST /discord/add-server - AddServer', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(201);
-    
+
     // Verify log entry was created
     const logs = await localEnv.DB.prepare(
       'SELECT log_message FROM log WHERE log_message LIKE ? ORDER BY log_id DESC LIMIT 1'
     ).bind('%Discord server added%').first() as any;
-    
+
     expect(logs).toBeDefined();
     expect(logs.log_message).toContain('888777666');
     expect(logs.log_message).toContain('Logged Server');
@@ -333,7 +294,7 @@ describe('POST /discord/add-server - AddServer', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(500);
     const body = await response.json() as any;
     expect(body.success).toBe(false);

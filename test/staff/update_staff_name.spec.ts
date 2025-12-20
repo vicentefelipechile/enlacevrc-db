@@ -1,59 +1,20 @@
-import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
+import { createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
 import worker from '../../src/index';
-
-import poblate from '../../db/poblate.sql?raw';
-import schema from '../../db/schema.sql?raw';
-import test from '../../db/test.sql?raw';
+import { createValidHeaders, createTestEnv, initializeDatabase, clearAndReloadTestData } from '../helpers/setup';
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
 describe('PUT /staff/{staff_id}/update_name - UpdateStaffName', () => {
-  const validHeaders = {
-    Authorization: 'Bearer test-api-key',
-    'X-Discord-ID': '10203040',
-    'X-Discord-Name': 'TestAdmin',
-    'Content-Type': 'application/json',
-  };
-  const localEnv = { ...env, API_KEY: 'test-api-key' };
+  const validHeaders = createValidHeaders(undefined, '10203040');
+  const localEnv = createTestEnv();
 
   beforeAll(async () => {
-    const cleanedSchemas = schema
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-    
-    const cleanedPoblate = poblate
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-
-    const preparedStatements = cleanedSchemas.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
-    });
-
-    const poblateStatements = cleanedPoblate.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
-    });
-      
-    await localEnv.DB.batch(preparedStatements);
-    await localEnv.DB.batch(poblateStatements);
+    await initializeDatabase(localEnv.DB);
   });
 
   beforeEach(async () => {
-    const tablesToClear = ["discord_settings", "setting", "profiles", "discord_server", "staff", "bot_admin", "log"];
-    for (const table of tablesToClear) {
-      await localEnv.DB.exec(`DELETE FROM ${table}`);
-    }
-    const cleanedTest = test
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-    
-    const statements = cleanedTest.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
-    });
-    await localEnv.DB.batch(statements);
+    await clearAndReloadTestData(localEnv.DB);
   });
 
   it('should return 405 for non-PUT methods', async () => {
@@ -64,7 +25,7 @@ describe('PUT /staff/{staff_id}/update_name - UpdateStaffName', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(405);
     const body = await response.json() as any;
     expect(body).toEqual({ success: false, error: 'Method GET not allowed for /staff/987654321/update_name' });
@@ -79,7 +40,7 @@ describe('PUT /staff/{staff_id}/update_name - UpdateStaffName', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(400);
     const body = await response.json() as any;
     expect(body).toEqual({ success: false, error: 'No fields provided to update' });
@@ -94,7 +55,7 @@ describe('PUT /staff/{staff_id}/update_name - UpdateStaffName', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(400);
     const body = await response.json() as any;
     expect(body).toEqual({ success: false, error: 'No valid fields provided to update. Only discord_name can be updated' });
@@ -109,7 +70,7 @@ describe('PUT /staff/{staff_id}/update_name - UpdateStaffName', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(404);
     const body = await response.json() as any;
     expect(body).toEqual({ success: false, error: 'Staff member not found' });
@@ -124,7 +85,7 @@ describe('PUT /staff/{staff_id}/update_name - UpdateStaffName', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(200);
     const body = await response.json() as any;
     expect(body).toHaveProperty('success');
@@ -143,7 +104,7 @@ describe('PUT /staff/{staff_id}/update_name - UpdateStaffName', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(403);
   });
 });

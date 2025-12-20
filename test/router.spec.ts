@@ -1,59 +1,26 @@
-import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
+import { createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import worker from '../src/index';
-
-import poblate from '../db/poblate.sql?raw';
-import schema from '../db/schema.sql?raw';
-import test from '../db/test.sql?raw';
+import { createValidHeaders, createTestEnv, initializeDatabase, clearAndReloadTestData } from './helpers/setup';
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
 describe('Router and Authentication', () => {
-  const localEnv = { ...env, API_KEY: 'correct-key' };
+  const validHeaders = createValidHeaders();
+  const localEnv = createTestEnv();
 
   beforeAll(async () => {
-    const cleanedSchemas = schema
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-    
-    const cleanedPoblate = poblate
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-
-    const preparedStatements = cleanedSchemas.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
-    });
-
-    const poblateStatements = cleanedPoblate.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
-    });
-      
-    await localEnv.DB.batch(preparedStatements);
-    await localEnv.DB.batch(poblateStatements);
+    await initializeDatabase(localEnv.DB);
   });
 
   beforeEach(async () => {
-    const tablesToClear = ["discord_settings", "setting", "profiles", "discord_server", "staff", "bot_admin", "log"];
-    for (const table of tablesToClear) {
-      await localEnv.DB.exec(`DELETE FROM ${table}`);
-    }
-    const cleanedTest = test
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-    
-    const statements = cleanedTest.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
-    });
-    await localEnv.DB.batch(statements);
+    await clearAndReloadTestData(localEnv.DB);
   });
 
   it('should return 401 Unauthorized if Authorization header is missing', async () => {
     const request = new IncomingRequest('http://example.com/profiles');
     const ctx = createExecutionContext();
-    const response = await worker.fetch(request, env, ctx);
+    const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
     const responseBody = await response.json() as any;
     expect(response.status).toBe(401);
@@ -62,7 +29,7 @@ describe('Router and Authentication', () => {
 
   it('should return 401 Unauthorized if Authorization header is incorrect', async () => {
     const request = new IncomingRequest('http://example.com/profiles', {
-      headers: { Authorization: 'Bearer incorrect-key' },
+      headers: { ...validHeaders, Authorization: 'Bearer incorrect-key' },
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -73,8 +40,12 @@ describe('Router and Authentication', () => {
   });
 
   it('should return 400 if X-Discord-ID header is missing', async () => {
+    const customHeaders = createValidHeaders();
+    // @ts-ignore
+    delete customHeaders['X-Discord-ID'];
+
     const request = new IncomingRequest('http://example.com/profiles/test-id', {
-      headers: { Authorization: 'Bearer correct-key' },
+      headers: customHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -86,11 +57,7 @@ describe('Router and Authentication', () => {
 
   it('should return 404 Not Found for routes not starting with /profile, /discord, or /staff', async () => {
     const request = new IncomingRequest('http://example.com/not-valid-route', {
-        headers: { 
-          Authorization: 'Bearer correct-key',
-          'X-Discord-ID': 'test-user-id',
-          'X-Discord-Name': 'test-discord-name'
-        },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -103,11 +70,7 @@ describe('Router and Authentication', () => {
   // Profile Route Tests
   it('should return 400 for missing action on /profile without profileId', async () => {
     const request = new IncomingRequest('http://example.com/profile', {
-      headers: {
-        Authorization: 'Bearer correct-key',
-        'X-Discord-ID': 'test-user-id',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -120,11 +83,7 @@ describe('Router and Authentication', () => {
   it('should return 404 for unknown action on /profile', async () => {
     const request = new IncomingRequest('http://example.com/profile/some-id/unknown-action', {
       method: 'GET',
-      headers: { 
-        Authorization: 'Bearer correct-key',
-        'X-Discord-ID': 'test-user-id',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -137,11 +96,7 @@ describe('Router and Authentication', () => {
   it('should return 405 for wrong method on /profile/{id}/get', async () => {
     const request = new IncomingRequest('http://example.com/profile/usr_test/get', {
       method: 'POST',
-      headers: { 
-        Authorization: 'Bearer correct-key',
-        'X-Discord-ID': 'test-user-id',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -155,11 +110,7 @@ describe('Router and Authentication', () => {
   it('should return 400 for missing server ID on /discord without action', async () => {
     const request = new IncomingRequest('http://example.com/discord', {
       method: 'GET',
-      headers: { 
-        Authorization: 'Bearer correct-key',
-        'X-Discord-ID': 'test-user-id',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -172,11 +123,7 @@ describe('Router and Authentication', () => {
   it('should return 404 for unknown action on /discord', async () => {
     const request = new IncomingRequest('http://example.com/discord/123456789/unknown-action', {
       method: 'GET',
-      headers: { 
-        Authorization: 'Bearer correct-key',
-        'X-Discord-ID': 'test-user-id',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -189,11 +136,7 @@ describe('Router and Authentication', () => {
   it('should return 405 for wrong method on /discord/{id}/exists-server', async () => {
     const request = new IncomingRequest('http://example.com/discord/123456789/exists-server', {
       method: 'POST',
-      headers: { 
-        Authorization: 'Bearer correct-key',
-        'X-Discord-ID': 'test-user-id',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -207,11 +150,7 @@ describe('Router and Authentication', () => {
   it('should return 400 for missing staff ID on /staff without action', async () => {
     const request = new IncomingRequest('http://example.com/staff', {
       method: 'GET',
-      headers: { 
-        Authorization: 'Bearer correct-key',
-        'X-Discord-ID': 'test-user-id',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -224,11 +163,7 @@ describe('Router and Authentication', () => {
   it('should return 404 for unknown action on /staff', async () => {
     const request = new IncomingRequest('http://example.com/staff/987654321/unknown-action', {
       method: 'GET',
-      headers: { 
-        Authorization: 'Bearer correct-key',
-        'X-Discord-ID': 'test-user-id',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -241,11 +176,7 @@ describe('Router and Authentication', () => {
   it('should return 405 for wrong method on /staff/{id}/update_name', async () => {
     const request = new IncomingRequest('http://example.com/staff/987654321/update_name', {
       method: 'POST',
-      headers: { 
-        Authorization: 'Bearer correct-key',
-        'X-Discord-ID': 'test-user-id',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -257,19 +188,15 @@ describe('Router and Authentication', () => {
 
   // Logs Route Tests
   it('should allow GET requests to /logs (admin only)', async () => {
+    const adminHeaders = { ...validHeaders, 'X-Discord-ID': '10203040' };
     const request = new IncomingRequest('http://example.com/logs', {
       method: 'GET',
-      headers: { 
-        Authorization: 'Bearer correct-key',
-        'X-Api-Key': 'correct-key',
-        'X-Discord-ID': '10203040',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: adminHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(200);
     const responseBody = await response.json() as any;
     expect(responseBody).toHaveProperty('success');
@@ -278,11 +205,7 @@ describe('Router and Authentication', () => {
   it('should return 405 for POST requests to /logs', async () => {
     const request = new IncomingRequest('http://example.com/logs', {
       method: 'POST',
-      headers: { 
-        Authorization: 'Bearer correct-key',
-        'X-Discord-ID': 'test-user-id',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -295,11 +218,7 @@ describe('Router and Authentication', () => {
   it('should return 405 for PUT requests to /logs', async () => {
     const request = new IncomingRequest('http://example.com/logs', {
       method: 'PUT',
-      headers: { 
-        Authorization: 'Bearer correct-key',
-        'X-Discord-ID': 'test-user-id',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -312,11 +231,7 @@ describe('Router and Authentication', () => {
   it('should return 405 for DELETE requests to /logs', async () => {
     const request = new IncomingRequest('http://example.com/logs', {
       method: 'DELETE',
-      headers: { 
-        Authorization: 'Bearer correct-key',
-        'X-Discord-ID': '12345',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
@@ -330,16 +245,12 @@ describe('Router and Authentication', () => {
   it('should allow GET requests to /auth/validate-admin without Authorization Bearer token', async () => {
     const request = new IncomingRequest('http://example.com/auth/validate-admin', {
       method: 'GET',
-      headers: { 
-        'X-Api-Key': 'correct-key',
-        'X-Discord-ID': '12345',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     // Should not require Authorization Bearer header, only X-Api-Key
     expect(response.status).toBe(200);
   });
@@ -347,7 +258,7 @@ describe('Router and Authentication', () => {
   it('should return 405 for POST requests to /auth/validate-admin', async () => {
     const request = new IncomingRequest('http://example.com/auth/validate-admin', {
       method: 'POST',
-      headers: { 
+      headers: {
         'X-Discord-ID': '12345'
       },
     });
@@ -366,7 +277,7 @@ describe('Router and Authentication', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(204);
 
     const accessControlAllowMethods = response.headers.get('Access-Control-Allow-Methods');
@@ -382,16 +293,12 @@ describe('Router and Authentication', () => {
   it('should add CORS headers to all responses', async () => {
     const request = new IncomingRequest('http://example.com/profiles', {
       method: 'GET',
-      headers: { 
-        Authorization: 'Bearer correct-key',
-        'X-Discord-ID': 'test-user-id',
-        'X-Discord-Name': 'test-discord-name'
-      },
+      headers: validHeaders,
     });
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-  
+
     const accessControlAllowHeaders = response.headers.get('Access-Control-Allow-Headers');
 
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');

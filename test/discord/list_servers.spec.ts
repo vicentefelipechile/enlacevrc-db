@@ -1,59 +1,34 @@
-import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
+import { createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
 import worker from '../../src/index';
-
-import poblate from '../../db/poblate.sql?raw';
-import schema from '../../db/schema.sql?raw';
-import test from '../../db/test.sql?raw';
+import { createValidHeaders, createTestEnv, initializeDatabase, clearAndReloadTestData } from '../helpers/setup';
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
 describe('GET /discord/list-servers - ListServers', () => {
-  const validHeaders = {
-    Authorization: 'Bearer test-api-key',
-    'X-Discord-ID': '987654321',
-    'X-Discord-Name': 'TestStaff',
-    'Content-Type': 'application/json',
-  };
-  const localEnv = { ...env, API_KEY: 'test-api-key' };
+  const validHeaders = createValidHeaders();
+  const localEnv = createTestEnv();
 
   beforeAll(async () => {
-    const cleanedSchemas = schema
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-    
-    const cleanedPoblate = poblate
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-
-    const preparedStatements = cleanedSchemas.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
-    });
-
-    const poblateStatements = cleanedPoblate.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
-    });
-      
-    await localEnv.DB.batch(preparedStatements);
-    await localEnv.DB.batch(poblateStatements);
+    await initializeDatabase(localEnv.DB);
   });
 
   beforeEach(async () => {
-    const tablesToClear = ["discord_settings", "setting", "profiles", "discord_server", "staff", "bot_admin", "log"];
-    for (const table of tablesToClear) {
-      await localEnv.DB.exec(`DELETE FROM ${table}`);
-    }
-    const cleanedTest = test
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-    
-    const statements = cleanedTest.map(statement => {
-      return localEnv.DB.prepare(`${statement};`);
+    await clearAndReloadTestData(localEnv.DB);
+  });
+
+  it('should return 405 for non-GET methods', async () => {
+    const request = new IncomingRequest('http://example.com/discord/123456789/exists-server', {
+      method: 'POST',
+      headers: validHeaders,
     });
-    await localEnv.DB.batch(statements);
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, localEnv, ctx);
+    await waitOnExecutionContext(ctx);
+
+    expect(response.status).toBe(405);
+    const body = await response.json() as any;
+    expect(body).toEqual({ success: false, error: 'Method POST not allowed for /discord/123456789/exists-server' });
   });
 
   it('should return 405 for non-GET methods', async () => {
@@ -64,7 +39,7 @@ describe('GET /discord/list-servers - ListServers', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(405);
     const body = await response.json() as any;
     expect(body.success).toBe(false);
@@ -74,6 +49,7 @@ describe('GET /discord/list-servers - ListServers', () => {
   it('should return empty array when no servers exist', async () => {
     // Clear all servers
     await localEnv.DB.exec('UPDATE profiles SET verified_from = NULL');
+    await localEnv.DB.exec('DELETE FROM vrchat_group');
     await localEnv.DB.exec('DELETE FROM discord_settings');
     await localEnv.DB.exec('DELETE FROM discord_server');
 
@@ -84,7 +60,7 @@ describe('GET /discord/list-servers - ListServers', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(200);
     const body = await response.json() as any;
     expect(body.success).toBe(true);
@@ -99,7 +75,7 @@ describe('GET /discord/list-servers - ListServers', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(200);
     const body = await response.json() as any;
     expect(body.success).toBe(true);
@@ -115,10 +91,10 @@ describe('GET /discord/list-servers - ListServers', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(200);
     const body = await response.json() as any;
-    
+
     body.data.forEach((server: any) => {
       expect(server).toHaveProperty('discord_server_id');
       expect(server).toHaveProperty('discord_server_name');
@@ -135,10 +111,10 @@ describe('GET /discord/list-servers - ListServers', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(200);
     const body = await response.json() as any;
-    
+
     const testServer = body.data.find((s: any) => s.discord_server_id === '123456789');
     expect(testServer).toBeDefined();
     expect(testServer.discord_server_name).toBe('TestServer');
@@ -161,7 +137,7 @@ describe('GET /discord/list-servers - ListServers', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(200);
     const body = await response.json() as any;
     expect(body.data.length).toBeGreaterThanOrEqual(3);
@@ -181,7 +157,7 @@ describe('GET /discord/list-servers - ListServers', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(401);
   });
 
@@ -193,7 +169,7 @@ describe('GET /discord/list-servers - ListServers', () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(request, localEnv, ctx);
     await waitOnExecutionContext(ctx);
-    
+
     expect(response.status).toBe(200);
     const body = await response.json() as any;
     expect(body).toHaveProperty('success');
