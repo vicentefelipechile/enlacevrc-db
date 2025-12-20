@@ -13,6 +13,131 @@ const SECOND = 1000;
 const MINUTE = 60 * SECOND;
 const HOUR = 60 * MINUTE;
 
+// =================================================================================================
+// Type Definitions (basadas en models.ts)
+// =================================================================================================
+
+/**
+ * @typedef {Object} SettingType
+ * @property {number} setting_type_id - ID único del tipo de configuración
+ * @property {string} type_name - Nombre del tipo
+ * @property {string} [description] - Descripción opcional del tipo
+ * @property {Date} created_at - Fecha de creación
+ * @property {string} created_by - Usuario que creó el tipo
+ * @property {Date} updated_at - Fecha de última actualización
+ */
+
+/**
+ * @typedef {Object} VerificationType
+ * @property {number} verification_type_id - ID único del tipo de verificación
+ * @property {string} type_name - Nombre del tipo de verificación
+ * @property {string} [description] - Descripción opcional del tipo
+ * @property {Date} created_at - Fecha de creación
+ * @property {string} created_by - Usuario que creó el tipo
+ * @property {Date} updated_at - Fecha de última actualización
+ * @property {boolean} is_disabled - Indica si está deshabilitado
+ */
+
+/**
+ * @typedef {Object} Setting
+ * @property {number} setting_id - ID único de la configuración
+ * @property {string} setting_name - Nombre de la configuración
+ * @property {number} setting_type_id - ID del tipo de configuración
+ * @property {string} default_value - Valor por defecto
+ * @property {Date} created_at - Fecha de creación
+ * @property {string} created_by - Usuario que creó la configuración
+ * @property {Date} updated_at - Fecha de última actualización
+ * @property {boolean} is_disabled - Indica si está deshabilitado
+ */
+
+/**
+ * @typedef {Object} LogLevel
+ * @property {number} log_level_id - ID único del nivel de log
+ * @property {string} level_name - Nombre del nivel
+ * @property {string} description - Descripción del nivel
+ * @property {Date} created_at - Fecha de creación
+ * @property {string} created_by - Usuario que creó el nivel
+ * @property {Date} updated_at - Fecha de última actualización
+ */
+
+/**
+ * @typedef {Object} Log
+ * @property {number} log_id - ID único del log
+ * @property {number} log_level_id - ID del nivel de log
+ * @property {string} log_message - Mensaje del log
+ * @property {Date} created_at - Fecha de creación
+ * @property {string} created_by - Usuario que creó el log
+ */
+
+/**
+ * @typedef {Object} DiscordServer
+ * @property {string} discord_server_id - ID del servidor de Discord
+ * @property {string} server_name - Nombre del servidor
+ * @property {Date} added_at - Fecha en que se agregó
+ * @property {string} added_by - Usuario que agregó el servidor
+ */
+
+/**
+ * @typedef {Object} BotAdmin
+ * @property {string} discord_id - ID de Discord del administrador
+ * @property {Date} added_at - Fecha en que se agregó
+ * @property {string} added_by - Usuario que agregó el administrador
+ */
+
+/**
+ * @typedef {Object} Staff
+ * @property {string} discord_id - ID de Discord del staff
+ * @property {string} [discord_name] - Nombre de Discord del staff
+ * @property {Date} added_at - Fecha en que se agregó
+ * @property {string} added_by - Usuario que agregó el staff
+ */
+
+/**
+ * @typedef {Object} Profile
+ * @property {string} discord_id - ID de Discord del usuario
+ * @property {string} vrchat_id - ID de VRChat del usuario
+ * @property {string} vrchat_name - Nombre de VRChat del usuario
+ * @property {Date} added_at - Fecha de creación del perfil
+ * @property {Date} updated_at - Fecha de última actualización
+ * @property {string} created_by - Usuario que creó el perfil
+ * @property {string} [updated_by] - Usuario que actualizó el perfil
+ * @property {boolean|number} is_banned - Indica si el usuario está baneado
+ * @property {Date} [banned_at] - Fecha del baneo
+ * @property {string} [banned_reason] - Razón del baneo
+ * @property {string} [banned_by] - Usuario que realizó el baneo
+ * @property {boolean|number} is_verified - Indica si el usuario está verificado
+ * @property {number} verification_id - ID del método de verificación
+ * @property {Date} [verified_at] - Fecha de verificación
+ * @property {string} [verified_from] - Servidor desde donde se verificó
+ * @property {string} [verified_by] - Usuario que realizó la verificación
+ */
+
+/**
+ * @typedef {Object} DiscordSetting
+ * @property {number} discord_setting_id - ID único de la configuración
+ * @property {string} discord_server_id - ID del servidor de Discord
+ * @property {string} setting_key - Clave de la configuración
+ * @property {string} setting_value - Valor de la configuración
+ * @property {Date} created_at - Fecha de creación
+ * @property {Date} updated_at - Fecha de última actualización
+ * @property {string} updated_by - Usuario que actualizó la configuración
+ */
+
+/**
+ * @typedef {Object} VRChatGroup
+ * @property {string} vrchat_group_id - ID del grupo de VRChat
+ * @property {string} discord_server_id - ID del servidor de Discord asociado
+ * @property {string} group_name - Nombre del grupo
+ * @property {Date} added_at - Fecha en que se agregó
+ * @property {string} added_by - Usuario que agregó el grupo
+ */
+
+/**
+ * @typedef {Object} UserRequestData
+ * @property {string} discord_id - Discord ID del usuario que realiza la petición
+ * @property {string} discord_name - Nombre de Discord del usuario que realiza la petición
+ */
+
 
 /**
  * D1Class - Client para interactuar con la API de EnlaceVRC
@@ -93,9 +218,7 @@ class D1Class {
      * Realiza una petición HTTP al API
      * @private
      * @param {string} endpoint - Endpoint relativo
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {Object} options - Opciones de fetch
      * @returns {Promise<Object>} Respuesta JSON del servidor
      */
@@ -170,14 +293,12 @@ class D1Class {
 
     /**
      * Crea un nuevo perfil de usuario
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {Object} profileData - Datos del perfil
      * @param {string} profileData.vrchat_id - ID de VRChat del usuario
      * @param {string} profileData.discord_id - ID de Discord del usuario
      * @param {string} profileData.vrchat_name - Nombre de VRChat del usuario
-     * @returns {Promise<Object>} Respuesta del servidor
+     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
      */
     static async createProfile(userRequestData, profileData) {
         const response = await D1Class._request('/profile/new', userRequestData, {
@@ -191,12 +312,10 @@ class D1Class {
 
     /**
      * Obtiene un perfil por su ID (VRChat ID o Discord ID)
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} profileId - ID del perfil (VRChat ID o Discord ID)
      * @param {boolean} [useCache=true] - Usar caché
-     * @returns {Promise<Object>} Datos del perfil
+     * @returns {Promise<Profile>} Datos del perfil
      */
     static async getProfile(userRequestData, profileId, useCache = true) {
         const cacheKey = `profile:${profileId}`;
@@ -217,15 +336,13 @@ class D1Class {
 
     /**
      * Lista todos los perfiles con filtros opcionales
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {Object} [filters={}] - Filtros opcionales
      * @param {number} [filters.limit] - Límite de resultados
      * @param {string} [filters.start_date] - Fecha de inicio (YYYY-MM-DD)
      * @param {string} [filters.end_date] - Fecha de fin (YYYY-MM-DD)
      * @param {string} [filters.created_by] - ID del creador
-     * @returns {Promise<Array>} Lista de perfiles
+     * @returns {Promise<Profile[]>} Lista de perfiles
      */
     static async listProfiles(userRequestData, filters = {}) {
         const params = new URLSearchParams(filters);
@@ -237,11 +354,9 @@ class D1Class {
 
     /**
      * Elimina un perfil
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} profileId - ID del perfil (VRChat ID o Discord ID)
-     * @returns {Promise<Object>} Respuesta del servidor
+     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
      */
     static async deleteProfile(userRequestData, profileId) {
         const response = await D1Class._request(`/profile/${profileId}/delete`, userRequestData, {
@@ -254,12 +369,10 @@ class D1Class {
 
     /**
      * Banea un perfil
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} profileId - ID del perfil (VRChat ID o Discord ID)
      * @param {string} bannedReason - Razón del baneo
-     * @returns {Promise<Object>} Respuesta del servidor
+     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
      */
     static async banProfile(userRequestData, profileId, bannedReason) {
         const response = await D1Class._request(`/profile/${profileId}/ban`, userRequestData, {
@@ -273,11 +386,9 @@ class D1Class {
 
     /**
      * Desbanea un perfil
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} profileId - ID del perfil (VRChat ID o Discord ID)
-     * @returns {Promise<Object>} Respuesta del servidor
+     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
      */
     static async unbanProfile(userRequestData, profileId) {
         const response = await D1Class._request(`/profile/${profileId}/unban`, userRequestData, {
@@ -290,14 +401,12 @@ class D1Class {
 
     /**
      * Verifica un perfil
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} profileId - ID del perfil (VRChat ID o Discord ID)
      * @param {Object} verificationData - Datos de verificación
      * @param {number} verificationData.verification_id - ID del método de verificación
      * @param {string} verificationData.verified_from - ID del servidor de Discord
-     * @returns {Promise<Object>} Respuesta del servidor
+     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
      */
     static async verifyProfile(userRequestData, profileId, verificationData) {
         const response = await D1Class._request(`/profile/${profileId}/verify`, userRequestData, {
@@ -311,11 +420,9 @@ class D1Class {
 
     /**
      * Desverifica un perfil
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} profileId - ID del perfil (VRChat ID o Discord ID)
-     * @returns {Promise<Object>} Respuesta del servidor
+     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
      */
     static async unverifyProfile(userRequestData, profileId) {
         const response = await D1Class._request(`/profile/${profileId}/unverify`, userRequestData, {
@@ -332,13 +439,11 @@ class D1Class {
 
     /**
      * Crea un nuevo miembro del staff
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {Object} staffData - Datos del staff
      * @param {string} staffData.discord_id - ID de Discord del staff
      * @param {string} staffData.discord_name - Nombre de Discord del staff
-     * @returns {Promise<Object>} Respuesta del servidor
+     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
      */
     static async createStaff(userRequestData, staffData) {
         const response = await D1Class._request('/staff/new', userRequestData, {
@@ -352,12 +457,10 @@ class D1Class {
 
     /**
      * Obtiene información de un miembro del staff
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} staffId - Discord ID del staff
      * @param {boolean} [useCache=true] - Usar caché
-     * @returns {Promise<Object>} Datos del staff
+     * @returns {Promise<Staff>} Datos del staff
      */
     static async getStaff(userRequestData, staffId, useCache = true) {
         const cacheKey = `staff:${staffId}`;
@@ -378,11 +481,9 @@ class D1Class {
 
     /**
      * Lista todos los miembros del staff
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {boolean} [useCache=true] - Usar caché
-     * @returns {Promise<Array>} Lista de staff
+     * @returns {Promise<Staff[]>} Lista de staff
      */
     static async listStaff(userRequestData, useCache = true) {
         const cacheKey = 'staff:list';
@@ -403,12 +504,10 @@ class D1Class {
 
     /**
      * Actualiza el nombre de un miembro del staff
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} staffId - Discord ID del staff
      * @param {string} newName - Nuevo nombre
-     * @returns {Promise<Object>} Respuesta del servidor
+     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
      */
     static async updateStaffName(userRequestData, staffId, newName) {
         const response = await D1Class._request(`/staff/${staffId}/update`, userRequestData, {
@@ -423,11 +522,9 @@ class D1Class {
 
     /**
      * Elimina un miembro del staff
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} staffId - Discord ID del staff
-     * @returns {Promise<Object>} Respuesta del servidor
+     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
      */
     static async deleteStaff(userRequestData, staffId) {
         const response = await D1Class._request(`/staff/${staffId}/delete`, userRequestData, {
@@ -444,12 +541,10 @@ class D1Class {
 
     /**
      * Agrega un nuevo servidor de Discord y puebla automáticamente todas las configuraciones existentes
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} discordServerId - ID del servidor de Discord a agregar
      * @param {string} serverName - Nombre del servidor de Discord
-     * @returns {Promise<Object>} Respuesta del servidor con información de configuraciones añadidas
+     * @returns {Promise<{success: boolean, message: string, settings_added: number}>} Respuesta del servidor con información de configuraciones añadidas
      */
     static async addDiscordServer(userRequestData, discordServerId, serverName) {
         const response = await D1Class._request('/discord/add-server', userRequestData, {
@@ -466,9 +561,7 @@ class D1Class {
 
     /**
      * Obtiene una configuración específica de Discord
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} serverId - ID del servidor de Discord
      * @param {string} settingKey - Clave de la configuración
      * @param {boolean} [useCache=true] - Usar caché
@@ -493,12 +586,10 @@ class D1Class {
 
     /**
      * Obtiene todas las configuraciones de un servidor de Discord
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} serverId - ID del servidor de Discord
      * @param {boolean} [useCache=true] - Usar caché
-     * @returns {Promise<Object>} Todas las configuraciones del servidor
+     * @returns {Promise<Record<string, string>>} Todas las configuraciones del servidor (objeto con claves y valores como strings)
      */
     static async getAllDiscordSettings(userRequestData, serverId, useCache = true) {
         const cacheKey = `discord:${serverId}:all`;
@@ -519,10 +610,9 @@ class D1Class {
 
     /**
      * Lista todas las configuraciones de Discord
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
-     * @returns {Promise<Array>} Lista de configuraciones
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
+     * @param {string} serverId - ID del servidor de Discord
+     * @returns {Promise<DiscordSetting[]>} Lista de configuraciones
      */
     static async listDiscordSettings(userRequestData, serverId) {
         const response = await D1Class._request(`/discord/${serverId}/list-settings`, userRequestData);
@@ -531,13 +621,11 @@ class D1Class {
 
     /**
      * Actualiza una configuración de Discord
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} serverId - ID del servidor de Discord
      * @param {string} settingKey - Clave de la configuración
      * @param {string} settingValue - Nuevo valor de la configuración
-     * @returns {Promise<Object>} Respuesta del servidor
+     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
      */
     static async updateDiscordSetting(userRequestData, serverId, settingKey, settingValue) {
         const response = await D1Class._request(`/discord/${serverId}/update-setting`, userRequestData, {
@@ -554,13 +642,11 @@ class D1Class {
 
     /**
      * Crea una nueva configuración de Discord
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} settingKey - Clave de la configuración
      * @param {string} settingType - Tipo de la configuración
      * @param {string} defaultValue - Valor por defecto de la configuración
-     * @returns {Promise<Object>} Respuesta del servidor
+     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
      */
     static async newDiscordSetting(userRequestData, settingKey, settingType, defaultValue) {
         const response = await D1Class._request(`/discord/new-setting`, userRequestData, {
@@ -578,9 +664,7 @@ class D1Class {
 
     /**
      * Verifica si un servidor de Discord existe
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} serverId - ID del servidor de Discord
      * @returns {Promise<boolean>} True si el servidor existe
      */
@@ -591,10 +675,8 @@ class D1Class {
 
     /**
      * Lista todos los servidores de Discord
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
-     * @returns {Promise<Array>} Array de servidores con discord_server_id y discord_server_name
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
+     * @returns {Promise<DiscordServer[]>} Array de servidores con discord_server_id y discord_server_name
      */
     static async listDiscordServers(userRequestData) {
         const response = await D1Class._request('/discord/list-servers', userRequestData);
@@ -607,13 +689,11 @@ class D1Class {
 
     /**
      * Añade un nuevo grupo de VRChat a un servidor de Discord
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} vrchatGroupId - ID del grupo de VRChat
      * @param {string} discordServerId - ID del servidor de Discord
      * @param {string} groupName - Nombre del grupo
-     * @returns {Promise<Object>} Respuesta del servidor
+     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
      */
     static async addVRChatGroup(userRequestData, vrchatGroupId, discordServerId, groupName) {
         const response = await D1Class._request('/group/add-group', userRequestData, {
@@ -632,12 +712,10 @@ class D1Class {
 
     /**
      * Lista todos los grupos de VRChat de un servidor de Discord
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} serverId - ID del servidor de Discord
      * @param {boolean} [useCache=true] - Usar caché
-     * @returns {Promise<Array>} Lista de grupos del servidor
+     * @returns {Promise<VRChatGroup[]>} Lista de grupos del servidor
      */
     static async listVRChatGroups(userRequestData, serverId, useCache = true) {
         const cacheKey = `discord:${serverId}:groups`;
@@ -658,12 +736,10 @@ class D1Class {
 
     /**
      * Obtiene información de un grupo de VRChat
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} groupId - ID del grupo de VRChat
      * @param {boolean} [useCache=true] - Usar caché
-     * @returns {Promise<Object>} Datos del grupo
+     * @returns {Promise<VRChatGroup>} Datos del grupo
      */
     static async getVRChatGroup(userRequestData, groupId, useCache = true) {
         const cacheKey = `group:${groupId}`;
@@ -684,12 +760,10 @@ class D1Class {
 
     /**
      * Obtiene el servidor de Discord al que pertenece un grupo de VRChat
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} groupId - ID del grupo de VRChat
      * @param {boolean} [useCache=true] - Usar caché
-     * @returns {Promise<Object>} Datos del servidor Discord
+     * @returns {Promise<DiscordServer>} Datos del servidor Discord
      */
     static async getVRChatGroupServer(userRequestData, groupId, useCache = true) {
         const cacheKey = `group:${groupId}:server`;
@@ -710,12 +784,10 @@ class D1Class {
 
     /**
      * Actualiza el nombre de un grupo de VRChat
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} groupId - ID del grupo de VRChat
      * @param {string} newName - Nuevo nombre del grupo
-     * @returns {Promise<Object>} Respuesta del servidor
+     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
      */
     static async updateVRChatGroup(userRequestData, groupId, newName) {
         const response = await D1Class._request(`/group/${groupId}/update-group`, userRequestData, {
@@ -730,11 +802,9 @@ class D1Class {
 
     /**
      * Elimina un grupo de VRChat
-     * @param {Object} userRequestData - Datos del usuario que realiza la petición
-     * @param {string} userRequestData.discord_id - Discord ID del usuario
-     * @param {string} userRequestData.discord_name - Nombre de Discord del usuario
+     * @param {UserRequestData} userRequestData - Datos del usuario que realiza la petición
      * @param {string} groupId - ID del grupo de VRChat
-     * @returns {Promise<Object>} Respuesta del servidor
+     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
      */
     static async deleteVRChatGroup(userRequestData, groupId) {
         const response = await D1Class._request(`/group/${groupId}/delete-group`, userRequestData, {
@@ -786,7 +856,7 @@ class D1Class {
 
     /**
      * Obtiene estadísticas de caché
-     * @returns {Object} Estadísticas de caché
+     * @returns {{keys: number, hits: number, misses: number, ksize: number, vsize: number}} Estadísticas de caché
      */
     static getCacheStats() {
         return D1Class.cache.getStats();
