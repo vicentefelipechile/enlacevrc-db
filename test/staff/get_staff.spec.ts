@@ -56,7 +56,7 @@ describe('GET /staff/{staff_id}/get - GetStaff', () => {
 
     expect(response.status).toBe(200);
     const body = await response.json() as any;
-    expect(body).toEqual({ success: true, staff: expect.any(Object) });
+    expect(body).toEqual({ success: true, data: expect.any(Object) });
   });
 
   it('should return 403 for non-staff users', async () => {

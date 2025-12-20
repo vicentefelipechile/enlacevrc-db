@@ -46,7 +46,7 @@ export async function GetStaff(request: Request, env: Env, staffId: string | und
 
         // Database result handling
         if (staff) {
-            return JsonResponse({ success: true, staff: staff });
+            return JsonResponse({ success: true, data: staff });
         }
 
         return ErrorResponse('Staff member not found', 404);

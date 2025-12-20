@@ -76,6 +76,43 @@ export async function AddGroup(request: Request, env: Env, userId: string): Prom
             userId
         );
 
+        const resultPreviousLogId = await env.DB.prepare(`
+            SELECT
+                COALESCE(MAX(log_id), 0) AS max_log_id
+            FROM
+                vrchat_group_log
+            WHERE
+                vrchat_group_id = ? AND
+                discord_server_id = ?
+        `).bind(vrchatGroupId, discordServerId).first<{ max_log_id: number }>();
+        const previousLogId = resultPreviousLogId?.max_log_id ?? 0;
+
+        const userName = request.headers.get('X-Discord-Name')!;
+        const initialGroupLogStatement = env.DB.prepare(`
+            INSERT INTO vrchat_group_log (
+                log_id,
+                vrchat_group_id,
+                discord_server_id,
+                group_name,
+                action_description,
+                added_by
+            ) VALUES (?, ?, ?, ?, ?, ?)
+        `);
+
+        const { success: groupLogInsertSuccess } = await initialGroupLogStatement.bind(
+            previousLogId + 1,
+            vrchatGroupId,
+            discordServerId,
+            groupName,
+            `Group ${groupName} added to Discord server ${discordServerId} by ${userName}`,
+            userId
+        ).run();
+
+        if (!groupLogInsertSuccess) {
+            LogIt(env.DB, LogLevel.ERROR, 'Failed to add VRChat group log', userId);
+        }
+
+        // Return the response
         return JsonResponse({
             success: true,
             message: 'VRChat group added successfully',

@@ -17,20 +17,6 @@ describe('PUT /discord/{server_id}/update-setting - UpdateSetting', () => {
     await clearAndReloadTestData(localEnv.DB);
   });
 
-  it('should return 405 for non-GET methods', async () => {
-    const request = new IncomingRequest('http://example.com/discord/123456789/exists-server', {
-      method: 'POST',
-      headers: validHeaders,
-    });
-    const ctx = createExecutionContext();
-    const response = await worker.fetch(request, localEnv, ctx);
-    await waitOnExecutionContext(ctx);
-
-    expect(response.status).toBe(405);
-    const body = await response.json() as any;
-    expect(body).toEqual({ success: false, error: 'Method POST not allowed for /discord/123456789/exists-server' });
-  });
-
   it('should return 405 for non-PUT methods', async () => {
     const request = new IncomingRequest('http://example.com/discord/123456789/update-setting', {
       method: 'GET',
