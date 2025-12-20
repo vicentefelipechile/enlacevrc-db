@@ -6,6 +6,7 @@
 
 -- Drop child tables first (those with foreign keys), then parent tables
 DROP TABLE IF EXISTS log;
+DROP TABLE IF EXISTS vrchat_group;
 DROP TABLE IF EXISTS discord_settings;
 DROP TABLE IF EXISTS profiles;
 DROP TABLE IF EXISTS staff;

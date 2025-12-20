@@ -107,3 +107,13 @@ CREATE TABLE IF NOT EXISTS discord_settings (
     FOREIGN KEY(discord_server_id) REFERENCES discord_server(discord_server_id),
     FOREIGN KEY(setting_key) REFERENCES setting(setting_name)
 );
+
+/* Created on 2025-12-19 19:16 */
+CREATE TABLE IF NOT EXISTS vrchat_group (
+    vrchat_group_id   TEXT PRIMARY KEY,
+    discord_server_id TEXT NOT NULL,
+    group_name        TEXT NOT NULL,
+    added_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    added_by          TEXT NOT NULL,
+    FOREIGN KEY(discord_server_id) REFERENCES discord_server(discord_server_id)
+);

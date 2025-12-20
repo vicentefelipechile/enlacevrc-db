@@ -98,3 +98,11 @@ INSERT INTO profiles (
     '123456789',
     '987654321'
 );
+
+/* Created on 2025-12-19 19:18 */
+INSERT INTO vrchat_group (vrchat_group_id, discord_server_id, group_name, added_by) VALUES (
+    'grp_test_default',
+    '123456789',
+    'TestGroup',
+    '987654321'
+);
