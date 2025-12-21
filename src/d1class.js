@@ -724,7 +724,7 @@ class D1Class {
      * @param {string} vrchatGroupId - ID del grupo de VRChat
      * @param {string} discordServerId - ID del servidor de Discord
      * @param {string} groupName - Nombre del grupo
-     * @returns {Promise<{success: boolean, message: string}>} Respuesta del servidor
+     * @returns {Promise<AddGroupResponse>} Respuesta del servidor
      */
     static async addVRChatGroup(userRequestData, vrchatGroupId, discordServerId, groupName) {
         const response = await D1Class._request('/group/add-group', userRequestData, {
